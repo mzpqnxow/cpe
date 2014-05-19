@@ -29,7 +29,10 @@ feedback about it, please contact:
 - Alejandro Galindo García: galindo.garcia.alejandro@gmail.com
 - Roberto Abdelkader Martínez Pérez: robertomartinezp@gmail.com
 """
-from collections import OrderedDict
+try:
+    from collections import OrderedDict
+except ImportError:
+    from ordereddict import OrderedDict
 
 from .comp.cpecomp import CPEComponent
 from .comp.cpecomp2_3_uri import CPEComponent2_3_URI
