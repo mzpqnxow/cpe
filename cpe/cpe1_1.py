@@ -10,3 +10,6 @@ class Cpe1_1(object):
 
     def get_os_part(self):
         return []
+
+    def get_application_part(self):
+        return []

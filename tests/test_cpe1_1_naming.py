@@ -20,3 +20,8 @@ class Cpe1_1_Naming(unittest.TestCase):
         cpe_name = "cpe:/"
         cpe1_1 = Cpe1_1(cpe_name)
         self.assertListEqual(cpe1_1.get_os_part(), [])
+
+    def test_get_application_part_of_cpe_name_without_parts(self):
+        cpe_name = "cpe:/"
+        cpe1_1 = Cpe1_1(cpe_name)
+        self.assertListEqual(cpe1_1.get_application_part(), [])
