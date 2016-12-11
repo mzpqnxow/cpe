@@ -7,3 +7,6 @@ class Cpe1_1(object):
 
     def get_hardware_part(self):
         return []
+
+    def get_os_part(self):
+        return []
