@@ -37,6 +37,26 @@ class Cpe1_1_Naming(unittest.TestCase):
 
         self.assertEqual(cpe1_1_hw.as_dict(), result)
 
+    def test_create_cpe_name_with_more_than_one_hardware(self):
+        cpe_name = "cpe:/juniper:m-series:m7i;juniper:es-pic"
+        cpe1_1_hw = Cpe1_1(cpe_name)
+        result = {
+            "prefix": "cpe:",
+            "hardware": [
+                {
+                    "vendor": "juniper",
+                    "product": "m-series",
+                    "version": "m7i",
+                },
+                {
+                    "vendor": "juniper",
+                    "product": "es-pic",
+                }
+            ]
+        }
+
+        self.assertEqual(cpe1_1_hw.as_dict(), result)
+
     def test_get_hardware_part_of_cpe_name_without_parts(self):
         cpe_name = "cpe:/"
         cpe1_1 = Cpe1_1(cpe_name)

@@ -13,14 +13,18 @@ class Cpe1_1(object):
         if len(part_list[1]) == 0:
             self.hardware_part = []
         else:
-            hardware_component_list = part_list[1].split(":")
-            component_key_list = ["vendor", "product", "version"]
-            hardware_element = {}
+            hw_element_list = []
 
-            for i in range(0, len(hardware_component_list)):
-                hardware_element[component_key_list[i]] = hardware_component_list[i]
+            for elem in part_list[1].split(";"):
+                hw_component_list = elem.split(":")
+                component_key_list = ["vendor", "product", "version"]
+                hw_element = {}
 
-            self.hardware_part = [hardware_element]
+                for i in range(0, len(hw_component_list)):
+                    hw_element[component_key_list[i]] = hw_component_list[i]
+
+                hw_element_list.append(hw_element)
+            self.hardware_part = hw_element_list
 
         self.prefix = part_list[0]
 
