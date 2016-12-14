@@ -93,3 +93,20 @@ class Cpe1_1_Naming(unittest.TestCase):
         }
 
         self.assertEqual(cpe1_1_hw.as_dict(), result)
+
+    def test_create_cpe_name_with_only_one_product_element(self):
+        cpe_name = "cpe:///:product"
+        cpe1_1_hw = Cpe1_1(cpe_name)
+        result = {
+            "prefix": "cpe:",
+            "hardware": [],
+            "os": [],
+            "application": [
+                {
+                    "vendor": "",
+                    "product": "product",
+                }
+            ]
+        }
+
+        self.assertEqual(cpe1_1_hw.as_dict(), result)

@@ -31,10 +31,9 @@ class Cpe1_1(object):
         self.application_part = []
 
         part_list = part_list[1:]
-        print(part_list)
+
         for p in range(0, len(part_list)):
             part = part_list[p]
-            print(part)
             parsed_part = []
 
             if len(part) > 0:
