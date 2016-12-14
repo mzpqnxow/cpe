@@ -6,6 +6,7 @@ class Cpe1_1(object):
     def __init__(self, cpe_name):
         self.name = cpe_name
         self._parse_name()
+        self.version = "1.1"
 
     @staticmethod
     def _parse_part(part_data):

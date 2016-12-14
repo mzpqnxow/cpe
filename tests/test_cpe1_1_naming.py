@@ -11,6 +11,11 @@ class Cpe1_1_Naming(unittest.TestCase):
         cpe1_1 = Cpe1_1(cpe_name)
         self.assertEqual(cpe_name, cpe1_1.name)
 
+    def test_version_of_cpe_1_1_is_1_1(self):
+        cpe_name = "cpe:/"
+        cpe1_1 = Cpe1_1(cpe_name)
+        self.assertEqual("1.1", cpe1_1.version)
+
     def test_create_cpe_name_without_parts(self):
         cpe_name = "cpe:/"
         cpe1_1 = Cpe1_1(cpe_name)
