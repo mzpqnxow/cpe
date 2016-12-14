@@ -17,6 +17,8 @@ class Cpe1_1_Naming(unittest.TestCase):
         result = {
             "prefix": "cpe:",
             "hardware": [],
+            "os": [],
+            "application": [],
         }
 
         self.assertEqual(cpe1_1.as_dict(), result)
@@ -32,7 +34,9 @@ class Cpe1_1_Naming(unittest.TestCase):
                     "product": "",
                     "version": "3825",
                 }
-            ]
+            ],
+            "os": [],
+            "application": [],
         }
 
         self.assertEqual(cpe1_1_hw.as_dict(), result)
@@ -52,7 +56,9 @@ class Cpe1_1_Naming(unittest.TestCase):
                     "vendor": "juniper",
                     "product": "es-pic",
                 }
-            ]
+            ],
+            "os": [],
+            "application": [],
         }
 
         self.assertEqual(cpe1_1_hw.as_dict(), result)
@@ -71,3 +77,19 @@ class Cpe1_1_Naming(unittest.TestCase):
         cpe_name = "cpe:/"
         cpe1_1 = Cpe1_1(cpe_name)
         self.assertListEqual(cpe1_1.get_application_part(), [])
+
+    def test_create_cpe_name_with_only_one_vendor_element(self):
+        cpe_name = "cpe:///vendor"
+        cpe1_1_hw = Cpe1_1(cpe_name)
+        result = {
+            "prefix": "cpe:",
+            "hardware": [],
+            "os": [],
+            "application": [
+                {
+                    "vendor": "vendor",
+                }
+            ]
+        }
+
+        self.assertEqual(cpe1_1_hw.as_dict(), result)
