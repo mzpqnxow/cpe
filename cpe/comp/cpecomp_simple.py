@@ -179,7 +179,7 @@ class CPEComponentSimple(CPEComponent):
         :rtype: boolean
         """
 
-        return self._is_valid_value() is not None
+        return self._is_valid_value()
 
     def _is_valid_language(self):
         """
