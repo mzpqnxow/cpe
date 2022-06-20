@@ -35,7 +35,7 @@ from .cpecomp2_3_uri import CPEComponent2_3_URI
 
 class CPEComponent2_3_URI_edpacked(CPEComponent2_3_URI):
     """
-    Represents a packd edition component of version 2.3 of CPE
+    Represents a packed edition component of version 2.3 of CPE
     specification with URI style.
     """
 
@@ -58,37 +58,35 @@ class CPEComponent2_3_URI_edpacked(CPEComponent2_3_URI):
         :returns: None
         :exception: ValueError - incorrect value of component
         """
-
-        self.set_value(comp_str)
+        self.set_value(comp_str, )
 
     def _decode(self):
         """
-        The decoding of the value of this type of component is not necesaary.
+        The decoding of the value of this type of component is not necessary.
         """
 
         pass
 
     def _is_valid_edition(self):
         """
-        This function is not necesaary in this component.
+        This function is not necessary in this component.
 
         :returns: True
         :rtype: boolean
         """
-
-        True
+        return True
 
     def _is_valid_value(self):
         """
-        This function is not necesaary in this component.
+        This function is not necessary in this component.
 
         :returns: True
         :rtype: boolean
         """
 
-        True
+        return True
 
-    def set_value(self, comp_str):
+    def set_value(self, comp_str, **kwargs):
         """
         Set the value of component.
 
@@ -101,6 +99,7 @@ class CPEComponent2_3_URI_edpacked(CPEComponent2_3_URI):
         self._encoded_value = comp_str
         self._standard_value = super(
             CPEComponent2_3_URI_edpacked, self)._decode()
+
 
 if __name__ == "__main__":
     import doctest

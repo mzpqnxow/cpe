@@ -133,7 +133,7 @@ class CPE2_2(CPE):
         """
 
         # CPE Name must not have whitespaces
-        if (self._str.find(" ") != -1):
+        if self._str.find(" ") != -1:
             msg = "Bad-formed CPE Name: it must not have whitespaces"
             raise ValueError(msg)
 
@@ -141,7 +141,7 @@ class CPE2_2(CPE):
         parts_match = CPE2_2._parts_rxc.match(self._str)
 
         # Validation of CPE Name parts
-        if (parts_match is None):
+        if parts_match is None:
             msg = "Bad-formed CPE Name: validation of parts failed"
             raise ValueError(msg)
 
@@ -152,9 +152,9 @@ class CPE2_2(CPE):
             if ck in parts_match_dict:
                 value = parts_match.group(ck)
 
-                if (value == CPEComponent2_2.VALUE_UNDEFINED):
+                if value == CPEComponent2_2.VALUE_UNDEFINED:
                     comp = CPEComponentUndefined()
-                elif (value == CPEComponent2_2.VALUE_EMPTY):
+                elif value == CPEComponent2_2.VALUE_EMPTY:
                     comp = CPEComponentEmpty()
                 else:
                     try:
@@ -202,32 +202,25 @@ class CPE2_2(CPE):
         :exception: TypeError - incompatible version
         """
 
-        wfn = []
-        wfn.append(CPE2_3_WFN.CPE_PREFIX)
+        wfn = [CPE2_3_WFN.CPE_PREFIX]
 
         for ck in CPEComponent.CPE_COMP_KEYS:
             lc = self._get_attribute_components(ck)
 
             comp = lc[0]
 
-            if (isinstance(comp, CPEComponentUndefined) or
-               isinstance(comp, CPEComponentEmpty)):
-
+            if isinstance(comp, (CPEComponentEmpty, CPEComponentUndefined)):
                 # Do not set the attribute
                 continue
-            else:
-                v = []
-                v.append(ck)
-                v.append("=")
 
+            v = [
+                ck, "=",
                 # Get the value of WFN of component
-                v.append('"')
-                v.append(comp.as_wfn())
-                v.append('"')
+                '"', comp.as_wfn(), '"']
 
-                # Append v to the WFN and add a separator
-                wfn.append("".join(v))
-                wfn.append(CPEComponent2_3_WFN.SEPARATOR_COMP)
+            # Append v to the WFN and add a separator
+            wfn.append("".join(v))
+            wfn.append(CPEComponent2_3_WFN.SEPARATOR_COMP)
 
         # Del the last separator
         wfn = wfn[:-1]
@@ -259,15 +252,14 @@ class CPE2_2(CPE):
             for elem in elements:
                 comp = elem.get(att_name)
 
-                if (isinstance(comp, CPEComponentEmpty) or
-                   isinstance(comp, CPEComponentUndefined)):
-
+                if isinstance(comp, (CPEComponentUndefined, CPEComponentEmpty)):
                     value = CPEComponent2_2.VALUE_EMPTY
                 else:
                     value = comp.get_value()
 
                 lc.append(value)
         return lc
+
 
 if __name__ == "__main__":
     import doctest

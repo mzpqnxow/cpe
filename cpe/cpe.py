@@ -29,6 +29,8 @@ feedback about it, please contact:
 - Alejandro Galindo García: galindo.garcia.alejandro@gmail.com
 - Roberto Abdelkader Martínez Pérez: robertomartinezp@gmail.com
 """
+import logging
+from abc import abstractmethod
 from collections import OrderedDict
 
 from .comp.cpecomp import CPEComponent
@@ -41,6 +43,8 @@ from .comp.cpecomp_empty import CPEComponentEmpty
 from .comp.cpecomp_anyvalue import CPEComponentAnyValue
 from .comp.cpecomp_undefined import CPEComponentUndefined
 from .comp.cpecomp_notapplicable import CPEComponentNotApplicable
+
+_logger = logging.getLogger(__name__)
 
 
 class CPE(dict):
@@ -89,6 +93,8 @@ class CPE(dict):
     VERSION_2_2 = "2.2"
     #: Version 2.3 of CPE specification
     VERSION_2_3 = "2.3"
+    # The out-of-spec Tenable version
+    VERSION_2_2_TENABLE = "2.2_tenable"
     #: Version not set
     VERSION_UNDEFINED = "undefined"
 
@@ -173,10 +179,15 @@ class CPE(dict):
                 elem_other = elements_other[i]
 
                 for ck in CPEComponent.CPE_COMP_KEYS_EXTENDED:
-                    if (elem_self[ck] != elem_other[ck]):
+                    if elem_self[ck] != elem_other[ck]:
                         return False
 
         return True
+
+    @abstractmethod
+    def _parse(self):
+        """Implement"""
+        raise NotImplementedError
 
     def __getitem__(self, i):
         """
@@ -203,13 +214,12 @@ class CPE(dict):
             for elem in elements:
                 for ck in CPEComponent.CPE_COMP_KEYS_EXTENDED:
                     comp = elem.get(ck)
-                    if (count == i):
+                    if count == i:
                         if not isinstance(comp, CPEComponentUndefined):
                             return comp
-                        else:
-                            raise IndexError(errmsg)
-                    else:
-                        count += 1
+                        raise IndexError(errmsg)
+
+                    count += 1
 
         raise IndexError(errmsg)
 
@@ -233,6 +243,7 @@ class CPE(dict):
         # Check if CPE Name is correct
         self._parse()
 
+    @property
     def __len__(self):
         """
         Returns the number of components of CPE Name.
@@ -280,6 +291,7 @@ class CPE(dict):
         from .cpe1_1 import CPE1_1
         from .cpe2_2 import CPE2_2
         from .cpe2_3 import CPE2_3
+        from .cpe2_2_tenable import CPE2_2_TENABLE
 
         # List of implemented versions of CPE Names
         #
@@ -288,6 +300,7 @@ class CPE(dict):
         _CPE_VERSIONS = OrderedDict((
             (CPE.VERSION_2_3, CPE2_3),
             (CPE.VERSION_2_2, CPE2_2),
+            (CPE.VERSION_2_2_TENABLE, CPE2_2_TENABLE),
             (CPE.VERSION_1_1, CPE1_1),))
 
         errmsg = 'Version of CPE not implemented'
@@ -297,6 +310,8 @@ class CPE(dict):
             for v in _CPE_VERSIONS:
                 try:
                     # Validate CPE Name
+                    cls = _CPE_VERSIONS[v]
+                    _logger.debug('Validate using %s(%s)', cls.__class__.__name__, cpe_str)
                     c = _CPE_VERSIONS[v](cpe_str)
                 except ValueError:
                     # Test another version
@@ -311,9 +326,11 @@ class CPE(dict):
             raise NotImplementedError(errmsg)
 
         elif version in _CPE_VERSIONS:
+            _logger.debug('found %s in versions, validating', version)
             # Correct input version, validate CPE Name
             return _CPE_VERSIONS[version](cpe_str)
         else:
+            _logger.debug('version %s unknown', version)
             # Invalid CPE version
             raise NotImplementedError(errmsg)
 
@@ -325,23 +342,22 @@ class CPE(dict):
         :rtype: string
         """
 
-        txtParts = []
+        txt_parts = []
 
         for pk in CPE.CPE_PART_KEYS:
-            txtParts.append(pk)
+            txt_parts.append(pk)
 
-            txtElements = []
-            txtElements.append(CPE._PREFIX_ELEMENTS)
+            txt_elements = [CPE._PREFIX_ELEMENTS]
 
             elements = self.get(pk)
 
             for elem in elements:
-                txtElem = []
-                txtElem.append(CPE._PREFIX_ELEM)
+                txt_elem = [CPE._PREFIX_ELEM]
 
                 for i in range(0, len(CPEComponent.CPE_COMP_KEYS_EXTENDED)):
-                    txtComp = []
+                    txt_comp = []
                     ck = CPEComponent.ordered_comp_parts.get(i)
+                    _logger.debug('trying to get %s ...', ck)
                     comp = elem.get(ck)
 
                     if isinstance(comp, CPEComponentLogical):
@@ -349,32 +365,30 @@ class CPE(dict):
                     else:
                         value = comp.get_value()
 
-                    txtComp.append("     ")
-                    txtComp.append(ck)
-                    txtComp.append(" = ")
-                    txtComp.append(value)
+                    txt_comp.append("     ")
+                    txt_comp.append(ck)
+                    txt_comp.append(" = ")
+                    txt_comp.append(value)
 
-                    txtElem.append("".join(txtComp))
+                    txt_elem.append("".join(txt_comp))
 
-                if len(txtElem) == 1:
+                if len(txt_elem) == 1:
                     # There are no components
-                    txtElem = []
-                    txtElem.append(" []")
+                    txt_elem = [" []"]
                 else:
-                    txtElem.append(CPE._SUFFIX_ELEM)
+                    txt_elem.append(CPE._SUFFIX_ELEM)
 
-                txtElements.append("\n".join(txtElem))
+                txt_elements.append("\n".join(txt_elem))
 
-            if len(txtElements) == 1:
+            if len(txt_elements) == 1:
                 # There are no elements
-                txtElements = []
-                txtElements.append(" []")
+                txt_elements = [" []"]
             else:
-                txtElements.append(CPE._SUFFIX_ELEMENTS)
+                txt_elements.append(CPE._SUFFIX_ELEMENTS)
 
-            txtParts.append("\n".join(txtElements))
+            txt_parts.append("\n".join(txt_elements))
 
-        return "\n".join(txtParts)
+        return "\n".join(txt_parts)
 
     def __str__(self):
         """
@@ -401,8 +415,7 @@ class CPE(dict):
             errmsg = "Key '{0}' is not exist".format(system)
             raise ValueError(errmsg)
 
-        elements = []
-        elements.append(components)
+        elements = [components]
 
         pk = CPE._system_and_parts[system]
         self[pk] = elements
@@ -440,19 +453,16 @@ class CPE(dict):
         :rtype: string
         :exception: TypeError - incompatible version with pack operation
         """
-
-        COMP_KEYS = (CPEComponent.ATT_EDITION,
+        comp_keys = (CPEComponent.ATT_EDITION,
                      CPEComponent.ATT_SW_EDITION,
                      CPEComponent.ATT_TARGET_SW,
                      CPEComponent.ATT_TARGET_HW,
                      CPEComponent.ATT_OTHER)
-
+        ed = None  # avoid unassigned use
         separator = CPEComponent2_3_URI_edpacked.SEPARATOR_COMP
+        packed_ed = [separator]
 
-        packed_ed = []
-        packed_ed.append(separator)
-
-        for ck in COMP_KEYS:
+        for ck in comp_keys:
             lc = self._get_attribute_components(ck)
             if len(lc) > 1:
                 # Incompatible version 1.1, there are two or more elements
@@ -462,12 +472,9 @@ class CPE(dict):
                 raise TypeError(errmsg)
 
             comp = lc[0]
-            if (isinstance(comp, CPEComponentUndefined) or
-               isinstance(comp, CPEComponentEmpty) or
-               isinstance(comp, CPEComponentAnyValue)):
-
+            if isinstance(comp, (CPEComponentEmpty, CPEComponentAnyValue, CPEComponentUndefined)):
                 value = ""
-            elif (isinstance(comp, CPEComponentNotApplicable)):
+            elif isinstance(comp, CPEComponentNotApplicable):
                 value = CPEComponent2_3_URI.VALUE_NA
             else:
                 # Component has some value; transform this original value
@@ -485,24 +492,17 @@ class CPE(dict):
         # Del the last separator
         packed_ed_str = "".join(packed_ed[:-1])
 
-        only_ed = []
-        only_ed.append(separator)
-        only_ed.append(ed)
-        only_ed.append(separator)
-        only_ed.append(separator)
-        only_ed.append(separator)
-        only_ed.append(separator)
-
+        only_ed = [separator, ed, separator, separator, separator, separator]
         only_ed_str = "".join(only_ed)
 
-        if (packed_ed_str == only_ed_str):
+        if packed_ed_str == only_ed_str:
             # All the extended attributes are blank,
             # so don't do any packing, just return ed
             return ed
-        else:
-            # Otherwise, pack the five values into a simple string
-            # prefixed and internally delimited with the tilde
-            return packed_ed_str
+
+        # Otherwise, pack the five values into a simple string
+        # prefixed and internally delimited with the tilde
+        return packed_ed_str
 
     def as_dict(self):
         """
@@ -511,7 +511,6 @@ class CPE(dict):
         :returns: CPE Name dict as string
         :rtype: string
         """
-
         return super(CPE, self).__str__()
 
     def as_uri_2_3(self):
@@ -523,8 +522,7 @@ class CPE(dict):
         :exception: TypeError - incompatible version
         """
 
-        uri = []
-        uri.append("cpe:/")
+        uri = ["cpe:/"]
 
         ordered_comp_parts = {
             0: CPEComponent.ATT_PART,
@@ -562,14 +560,10 @@ class CPE(dict):
             else:
                 comp = lc[0]
 
-                if (isinstance(comp, CPEComponentEmpty) or
-                   isinstance(comp, CPEComponentAnyValue)):
-
+                if isinstance(comp, (CPEComponentAnyValue, CPEComponentEmpty)):
                     # Logical value any
                     v = CPEComponent2_3_URI.VALUE_ANY
-
                 elif isinstance(comp, CPEComponentNotApplicable):
-
                     # Logical value not applicable
                     v = CPEComponent2_3_URI.VALUE_NA
                 elif isinstance(comp, CPEComponentUndefined):
@@ -612,8 +606,7 @@ class CPE(dict):
 
         from .cpe2_3_wfn import CPE2_3_WFN
 
-        wfn = []
-        wfn.append(CPE2_3_WFN.CPE_PREFIX)
+        wfn = [CPE2_3_WFN.CPE_PREFIX]
 
         for i in range(0, len(CPEComponent.ordered_comp_parts)):
             ck = CPEComponent.ordered_comp_parts[i]
@@ -629,9 +622,7 @@ class CPE(dict):
             else:
                 comp = lc[0]
 
-                v = []
-                v.append(ck)
-                v.append("=")
+                v = [ck, "="]
 
                 if isinstance(comp, CPEComponentAnyValue):
 
@@ -643,15 +634,12 @@ class CPE(dict):
                     # Logical value not applicable
                     v.append(CPEComponent2_3_WFN.VALUE_NA)
 
-                elif (isinstance(comp, CPEComponentUndefined) or
-                      isinstance(comp, CPEComponentEmpty)):
+                elif isinstance(comp, (CPEComponentEmpty, CPEComponentUndefined)):
                     # Do not set the attribute
                     continue
                 else:
                     # Get the simple value of WFN of component
-                    v.append('"')
-                    v.append(comp.as_wfn())
-                    v.append('"')
+                    v.extend(['"', comp.as_wfn(), '"'])
 
                 # Append v to the WFN and add a separator
                 wfn.append("".join(v))
@@ -674,8 +662,7 @@ class CPE(dict):
         :exception: TypeError - incompatible version
         """
 
-        fs = []
-        fs.append("cpe:2.3:")
+        fs = ["cpe:2.3:"]
 
         for i in range(0, len(CPEComponent.ordered_comp_parts)):
             ck = CPEComponent.ordered_comp_parts[i]
@@ -691,15 +678,10 @@ class CPE(dict):
             else:
                 comp = lc[0]
 
-                if (isinstance(comp, CPEComponentUndefined) or
-                   isinstance(comp, CPEComponentEmpty) or
-                   isinstance(comp, CPEComponentAnyValue)):
-
+                if isinstance(comp, (CPEComponentEmpty, CPEComponentAnyValue, CPEComponentUndefined)):
                     # Logical value any
                     v = CPEComponent2_3_FS.VALUE_ANY
-
                 elif isinstance(comp, CPEComponentNotApplicable):
-
                     # Logical value not applicable
                     v = CPEComponent2_3_FS.VALUE_NA
                 else:
@@ -782,7 +764,7 @@ class CPE(dict):
 
     def get_target_hardware(self):
         """
-        Returns the arquitecture of CPE Name.
+        Returns the architecture of CPE Name.
 
         :returns: Value of target_hw attribute as string list.
         :rtype: list
@@ -871,6 +853,20 @@ class CPE(dict):
 
         elements = self.get(CPE.KEY_OS)
         return len(elements) > 0
+
+    @abstractmethod
+    def get_attribute_values(self, att_name):
+        """
+        Returns the values of attribute "att_name" of CPE Name.
+        By default a only element in each part.
+
+        :param string att_name: Attribute name to get
+        :returns: List of attribute values
+        :rtype: list
+        :exception: ValueError - invalid attribute name
+        """
+        raise NotImplementedError
+
 
 if __name__ == "__main__":
     import doctest

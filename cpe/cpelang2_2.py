@@ -96,7 +96,7 @@ class CPELanguage2_2(CPELanguage):
             cpel_dom = self.document
 
         # Identify the root element
-        if cpel_dom.nodeName == TAG_ROOT or cpel_dom.nodeName == TAG_PLATSPEC:
+        if cpel_dom.nodeName in (TAG_ROOT, TAG_PLATSPEC):
             for node in cpel_dom.childNodes:
                 if node.nodeName == TAG_PLATSPEC:
                     return self.language_match(cpeset, node)
@@ -120,20 +120,20 @@ class CPELanguage2_2(CPELanguage):
         # Identify a logical operator element
         elif cpel_dom.nodeName == TAG_LOGITEST:
             count = 0
-            len = 0
+            len_ = 0
             answer = False
 
             for node in cpel_dom.childNodes:
                 if node.nodeName.find("#") == 0:
                     continue
-                len = len + 1
+                len_ += 1
                 if self.language_match(cpeset, node):
-                    count = count + 1
+                    count += 1
 
             operator = cpel_dom.getAttribute(ATT_OP).upper()
 
             if operator == ATT_OP_AND:
-                if count == len:
+                if count == len_:
                     answer = True
             elif operator == ATT_OP_OR:
                 if count > 0:
@@ -147,6 +147,7 @@ class CPELanguage2_2(CPELanguage):
             return answer
         else:
             return False
+
 
 if __name__ == "__main__":
     import doctest

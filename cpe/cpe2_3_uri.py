@@ -111,21 +111,26 @@ class CPE2_3_URI(CPE2_3):
         :rtype: CPEComponent
         :exception: ValueError - invalid value of attribute
         """
+        value_map_comp_cls = (
+            (CPEComponent2_3_URI.VALUE_UNDEFINED, CPEComponentUndefined),
+            (CPEComponent2_3_URI.VALUE_ANY, CPEComponentAnyValue),
+            (CPEComponent2_3_URI.VALUE_EMPTY, CPEComponentAnyValue),
+            (CPEComponent2_3_URI.VALUE_NA, CPEComponentNotApplicable))
 
-        if value == CPEComponent2_3_URI.VALUE_UNDEFINED:
-            comp = CPEComponentUndefined()
-        elif (value == CPEComponent2_3_URI.VALUE_ANY or
-              value == CPEComponent2_3_URI.VALUE_EMPTY):
-            comp = CPEComponentAnyValue()
-        elif (value == CPEComponent2_3_URI.VALUE_NA):
-            comp = CPEComponentNotApplicable()
+        for value_type, comp_cls in value_map_comp_cls:
+            if value == value_type:
+                comp = comp_cls()
+                break
         else:
-            comp = CPEComponentNotApplicable()
+            # If there is an exception, it is raised and comp is irrelevant
+            # If no exception, comp is replaced
+            # I believe this can be removed as the instantiation of CPEComponentNotApplicable
+            # has no impact on the application
+            # comp = CPEComponentNotApplicable()
             try:
                 comp = CPEComponent2_3_URI(value, att)
             except ValueError:
-                errmsg = "Invalid value of attribute '{0}': {1} ".format(att,
-                                                                         value)
+                errmsg = "Invalid value of attribute '{0}': {1} ".format(att, value)
                 raise ValueError(errmsg)
 
         return comp
@@ -188,36 +193,37 @@ class CPE2_3_URI(CPE2_3):
             elements = self.get(pk)
             for elem in elements:
                 for ck in CPEComponent.CPE_COMP_KEYS:
-                    if (count == i):
-                        if ck == CPEComponent.ATT_EDITION:
-                            empty_ed = elem.get(ck) == CPEComponentUndefined()
-                            k = CPEComponent.ATT_SW_EDITION
-                            empty_sw_ed = elem.get(k) == CPEComponentUndefined()
-                            k = CPEComponent.ATT_TARGET_SW
-                            empty_tg_sw = elem.get(k) == CPEComponentUndefined()
-                            k = CPEComponent.ATT_TARGET_HW
-                            empty_tg_hw = elem.get(k) == CPEComponentUndefined()
-                            k = CPEComponent.ATT_OTHER
-                            empty_oth = elem.get(k) == CPEComponentUndefined()
-
-                            if (empty_ed and empty_sw_ed and empty_tg_sw and
-                               empty_tg_hw and empty_oth):
-
-                                # Edition component undefined
-                                raise IndexError(errmsg)
-                            else:
-                                # Some part of edition component defined.
-                                # Pack the edition component
-                                return CPEComponent2_3_URI_edpacked(packed_ed)
-                        else:
-                            comp = elem.get(ck)
-
-                            if not isinstance(comp, CPEComponentUndefined):
-                                return comp
-                            else:
-                                raise IndexError(errmsg)
-                    else:
+                    if count != i:
                         count += 1
+                        continue
+
+                    if ck != CPEComponent.ATT_EDITION:
+                        comp = elem.get(ck)
+                        if isinstance(comp, CPEComponentUndefined):
+                            raise IndexError(errmsg)
+                        return comp
+
+                    empty_ed = elem.get(ck) == CPEComponentUndefined()
+
+                    k = CPEComponent.ATT_SW_EDITION
+                    empty_sw_ed = elem.get(k) == CPEComponentUndefined()
+
+                    k = CPEComponent.ATT_TARGET_SW
+                    empty_tg_sw = elem.get(k) == CPEComponentUndefined()
+
+                    k = CPEComponent.ATT_TARGET_HW
+                    empty_tg_hw = elem.get(k) == CPEComponentUndefined()
+
+                    k = CPEComponent.ATT_OTHER
+                    empty_oth = elem.get(k) == CPEComponentUndefined()
+
+                    # Edition component undefined
+                    if all((empty_ed, empty_sw_ed, empty_tg_sw, empty_tg_hw, empty_oth)):
+                        raise IndexError(errmsg)
+
+                    # Some part of edition component defined.
+                    # Pack the edition component
+                    return CPEComponent2_3_URI_edpacked(packed_ed)
 
         raise IndexError(errmsg)
 
@@ -260,7 +266,7 @@ class CPE2_3_URI(CPE2_3):
         """
 
         # CPE Name must not have whitespaces
-        if (self._str.find(" ") != -1):
+        if self._str.find(" ") != -1:
             msg = "Bad-formed CPE Name: it must not have whitespaces"
             raise ValueError(msg)
 
@@ -268,7 +274,7 @@ class CPE2_3_URI(CPE2_3):
         parts_match = CPE2_3_URI._parts_rxc.match(self._str)
 
         # Validation of CPE Name parts
-        if (parts_match is None):
+        if parts_match is None:
             msg = "Bad-formed CPE Name: validation of parts failed"
             raise ValueError(msg)
 
@@ -279,7 +285,7 @@ class CPE2_3_URI(CPE2_3):
             value = parts_match.group(ck)
 
             try:
-                if (ck == CPEComponent.ATT_EDITION and value is not None):
+                if ck == CPEComponent.ATT_EDITION and value is not None:
                     if value[0] == CPEComponent2_3_URI.SEPARATOR_PACKED_EDITION:
                         # Unpack the edition part
                         edition_parts = CPE2_3_URI._unpack_edition(value)
@@ -305,25 +311,27 @@ class CPE2_3_URI(CPE2_3):
         # logical value ANY
         check_change = True
 
-        # Start in the last attribute specififed in CPE Name
+        # Start in the last attribute specified in CPE Name
         for ck in CPEComponent.CPE_COMP_KEYS[::-1]:
-            if ck in components:
-                comp = components[ck]
-                if check_change:
-                    check_change = ((ck != CPEComponent.ATT_EDITION) and
-                                   (comp == CPEComponentUndefined()) or
-                                   (ck == CPEComponent.ATT_EDITION and
-                                   (len(edition_parts) == 0)))
-                elif comp == CPEComponentUndefined():
-                    comp = CPEComponentAnyValue()
+            if ck not in components:
+                continue
 
-                components[ck] = comp
+            comp = components[ck]
+            if check_change:
+                check_change = (
+                    (ck != CPEComponent.ATT_EDITION) and (
+                        comp == CPEComponentUndefined()) or (
+                            ck == CPEComponent.ATT_EDITION and (
+                                len(edition_parts) == 0)))
+            elif comp == CPEComponentUndefined():
+                comp = CPEComponentAnyValue()
+
+            components[ck] = comp
 
         #  Storage of CPE Name
         part_comp = components[CPEComponent.ATT_PART]
         if isinstance(part_comp, CPEComponentLogical):
-            elements = []
-            elements.append(components)
+            elements = [components]
             self[CPE.KEY_UNDEFINED] = elements
         else:
             # Create internal structure of CPE Name in parts:
@@ -353,66 +361,52 @@ class CPE2_3_URI(CPE2_3):
         :exception: TypeError - incompatible version
         """
 
-        if self._str.find(CPEComponent2_3_URI.SEPARATOR_PACKED_EDITION) == -1:
-            # Edition unpacked, only show the first seven components
-
-            wfn = []
-            wfn.append(CPE2_3_WFN.CPE_PREFIX)
-
-            for ck in CPEComponent.CPE_COMP_KEYS:
-                lc = self._get_attribute_components(ck)
-
-                if len(lc) > 1:
-                    # Incompatible version 1.1, there are two or more elements
-                    # in CPE Name
-                    errmsg = "Incompatible version {0} with WFN".format(
-                        self.VERSION)
-                    raise TypeError(errmsg)
-
-                else:
-                    comp = lc[0]
-
-                    v = []
-                    v.append(ck)
-                    v.append("=")
-
-                    if (isinstance(comp, CPEComponentUndefined) or
-                       isinstance(comp, CPEComponentEmpty)):
-
-                        # Do not set the attribute
-                        continue
-
-                    elif isinstance(comp, CPEComponentAnyValue):
-
-                        # Logical value any
-                        v.append(CPEComponent2_3_WFN.VALUE_ANY)
-
-                    elif isinstance(comp, CPEComponentNotApplicable):
-
-                        # Logical value not applicable
-                        v.append(CPEComponent2_3_WFN.VALUE_NA)
-
-                    else:
-                        # Get the value of WFN of component
-                        v.append('"')
-                        v.append(comp.as_wfn())
-                        v.append('"')
-
-                    # Append v to the WFN and add a separator
-                    wfn.append("".join(v))
-                    wfn.append(CPEComponent2_3_WFN.SEPARATOR_COMP)
-
-            # Del the last separator
-            wfn = wfn[:-1]
-
-            # Return the WFN string
-            wfn.append(CPE2_3_WFN.CPE_SUFFIX)
-
-            return "".join(wfn)
-
-        else:
+        if self._str.find(CPEComponent2_3_URI.SEPARATOR_PACKED_EDITION) != -1:
             # Shows all components
             return super(CPE2_3_URI, self).as_wfn()
+        # Edition unpacked, only show the first seven components
+
+        wfn = [CPE2_3_WFN.CPE_PREFIX]
+
+        for ck in CPEComponent.CPE_COMP_KEYS:
+            lc = self._get_attribute_components(ck)
+
+            if len(lc) > 1:
+                # Incompatible version 1.1, there are two or more elements
+                # in CPE Name
+                errmsg = "Incompatible version {0} with WFN".format(
+                    self.VERSION)
+                raise TypeError(errmsg)
+
+            comp = lc[0]
+            if isinstance(comp, (CPEComponentEmpty, CPEComponentUndefined)):
+                # Do not set the attribute
+                continue
+
+            v = [ck, "="]
+            if isinstance(comp, CPEComponentAnyValue):
+                # Logical value any
+                v.append(CPEComponent2_3_WFN.VALUE_ANY)
+            elif isinstance(comp, CPEComponentNotApplicable):
+                # Logical value not applicable
+                v.append(CPEComponent2_3_WFN.VALUE_NA)
+            else:
+                # Get the value of WFN of component
+                v.append('"')
+                v.append(comp.as_wfn())
+                v.append('"')
+
+            # Append v to the WFN and add a separator
+            wfn.append("".join(v))
+            wfn.append(CPEComponent2_3_WFN.SEPARATOR_COMP)
+
+        # Del the last separator
+        wfn = wfn[:-1]
+
+        # Return the WFN string
+        wfn.append(CPE2_3_WFN.CPE_SUFFIX)
+
+        return "".join(wfn)
 
     def get_attribute_values(self, att_name):
         """
@@ -436,8 +430,7 @@ class CPE2_3_URI(CPE2_3):
             for elem in elements:
                 comp = elem.get(att_name)
 
-                if (isinstance(comp, CPEComponentAnyValue) or
-                   isinstance(comp, CPEComponentUndefined)):
+                if isinstance(comp, (CPEComponentUndefined, CPEComponentAnyValue)):
                     value = CPEComponent2_3_URI.VALUE_ANY
                 elif isinstance(comp, CPEComponentNotApplicable):
                     value = CPEComponent2_3_URI.VALUE_NA
@@ -446,6 +439,7 @@ class CPE2_3_URI(CPE2_3):
 
                 lc.append(value)
         return lc
+
 
 if __name__ == "__main__":
     import doctest

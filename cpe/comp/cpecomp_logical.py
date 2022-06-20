@@ -102,6 +102,7 @@ class CPEComponentLogical(CPEComponent):
         errmsg = "Class method not implemented. Use the method of some child class"
         raise NotImplementedError(errmsg)
 
+
 if __name__ == "__main__":
     import doctest
     doctest.testmod()

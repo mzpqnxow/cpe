@@ -140,11 +140,12 @@ class CPEComponent2_3_WFN(CPEComponent2_3):
         """
 
         # Del double quotes of value
-        str = comp_str[1:-1]
-        self._standard_value = str
+        str_ = comp_str[1:-1]
+        self._standard_value = str_
 
         # Parse the value
-        super(CPEComponent2_3_WFN, self).set_value(str, comp_att)
+        super(CPEComponent2_3_WFN, self).set_value(str_, comp_att)
+
 
 if __name__ == "__main__":
     import doctest

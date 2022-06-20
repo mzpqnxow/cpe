@@ -136,7 +136,7 @@ class CPE2_3_FS(CPE2_3):
         """
 
         # CPE Name must not have whitespaces
-        if (self._str.find(" ") != -1):
+        if self._str.find(" ") != -1:
             msg = "Bad-formed CPE Name: it must not have whitespaces"
             raise ValueError(msg)
 
@@ -144,7 +144,7 @@ class CPE2_3_FS(CPE2_3):
         parts_match = CPE2_3_FS._parts_rxc.match(self._str)
 
         # Validation of CPE Name parts
-        if (parts_match is None):
+        if parts_match is None:
             msg = "Bad-formed CPE Name: validation of parts failed"
             raise ValueError(msg)
 
@@ -152,23 +152,23 @@ class CPE2_3_FS(CPE2_3):
         parts_match_dict = parts_match.groupdict()
 
         for ck in CPEComponent.CPE_COMP_KEYS_EXTENDED:
-            if ck in parts_match_dict:
-                value = parts_match.group(ck)
-
-                if (value == CPEComponent2_3_FS.VALUE_ANY):
-                    comp = CPEComponentAnyValue()
-                elif (value == CPEComponent2_3_FS.VALUE_NA):
-                    comp = CPEComponentNotApplicable()
-                else:
-                    try:
-                        comp = CPEComponent2_3_FS(value, ck)
-                    except ValueError:
-                        errmsg = "Bad-formed CPE Name: not correct value: {0}".format(
-                            value)
-                        raise ValueError(errmsg)
-            else:
+            if ck not in parts_match_dict:
                 errmsg = "Component {0} should be specified".format(ck)
-                raise ValueError(ck)
+                raise ValueError(errmsg)
+
+            value = parts_match.group(ck)
+
+            if value == CPEComponent2_3_FS.VALUE_ANY:
+                comp = CPEComponentAnyValue()
+            elif value == CPEComponent2_3_FS.VALUE_NA:
+                comp = CPEComponentNotApplicable()
+            else:
+                try:
+                    comp = CPEComponent2_3_FS(value, ck)
+                except ValueError:
+                    errmsg = "Bad-formed CPE Name: not correct value: {0}".format(
+                        value)
+                    raise ValueError(errmsg)
 
             components[ck] = comp
 
@@ -178,8 +178,7 @@ class CPE2_3_FS(CPE2_3):
 
         part_comp = components[CPEComponent.ATT_PART]
         if isinstance(part_comp, CPEComponentLogical):
-            elements = []
-            elements.append(components)
+            elements = [components]
             self[CPE.KEY_UNDEFINED] = elements
         else:
             # Create internal structure of CPE Name in parts:
@@ -222,15 +221,14 @@ class CPE2_3_FS(CPE2_3):
 
                 if isinstance(comp, CPEComponentAnyValue):
                     value = CPEComponent2_3_FS.VALUE_ANY
-
                 elif isinstance(comp, CPEComponentNotApplicable):
                     value = CPEComponent2_3_FS.VALUE_NA
-
                 else:
                     value = comp.get_value()
 
                 lc.append(value)
         return lc
+
 
 if __name__ == "__main__":
     import doctest

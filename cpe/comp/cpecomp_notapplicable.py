@@ -38,7 +38,7 @@ class CPEComponentNotApplicable(CPEComponentLogical):
     compatible with the components of all versions of CPE specification.
 
     For example, in version 2.3 of CPE specification, an component "not
-    applicable" is update attribute in CPE name cpe:/a:microsft:windows:me:-.
+    applicable" is update attribute in CPE name cpe:/a:microsoft:windows:me:-.
     """
 
     ####################
@@ -54,7 +54,7 @@ class CPEComponentNotApplicable(CPEComponentLogical):
         :rtype: boolean
         """
 
-        return (self == item)
+        return self == item
 
     def __eq__(self, other):
         """
@@ -86,6 +86,7 @@ class CPEComponentNotApplicable(CPEComponentLogical):
         """
 
         return "<NA>"
+
 
 if __name__ == "__main__":
     import doctest

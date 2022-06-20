@@ -102,10 +102,7 @@ class CPEComponent1_1(CPEComponentSimple):
         False
         """
 
-        if ((self == item) or
-           isinstance(self, CPEComponentUndefined) or
-           isinstance(self, CPEComponentEmpty)):
-
+        if self == item or isinstance(self, (CPEComponentEmpty, CPEComponentUndefined)):
             return True
 
         dataset = self._standard_value
@@ -113,20 +110,12 @@ class CPEComponent1_1(CPEComponentSimple):
 
         # len(self) == 1, check NOT operation
         if len(dataset) == 1:
-            valset = dataset[0]
-            if ((valset != dataitem) and
-               self._is_negated and
-               (not item._is_negated) and
-               len(dataitem) == 1):
-
-                return True
-            else:
-                return False
+            return dataset[0] != all([dataitem, self._is_negated, not item._is_negated, len(dataitem) == 1])
 
         # len(self) > 1, check OR operation
-        eqNegated = self._is_negated == item._is_negated
+        eq_negated = self._is_negated == item._is_negated
         for elem in dataset:
-            if ([elem] == dataitem) and eqNegated:
+            if ([elem] == dataitem) and eq_negated:
                 return True
 
         return False
@@ -165,11 +154,11 @@ class CPEComponent1_1(CPEComponentSimple):
         for elem in elements:
             result = []
             idx = 0
-            while (idx < len(elem)):
+            while idx < len(elem):
                 # Get the idx'th character of s
                 c = elem[idx]
 
-                if (c in CPEComponent1_1.NON_STANDARD_VALUES):
+                if c in CPEComponent1_1.NON_STANDARD_VALUES:
                     # Escape character
                     result.append("\\")
                     result.append(c)
@@ -193,18 +182,17 @@ class CPEComponent1_1(CPEComponentSimple):
 
         comp_str = self._encoded_value
 
-        value_pattern = []
-        value_pattern.append("^((")
-        value_pattern.append("~[")
-        value_pattern.append(CPEComponent1_1._STRING)
-        value_pattern.append("]+")
-        value_pattern.append(")|(")
-        value_pattern.append("[")
-        value_pattern.append(CPEComponent1_1._STRING)
-        value_pattern.append("]+(![")
-        value_pattern.append(CPEComponent1_1._STRING)
-        value_pattern.append("]+)*")
-        value_pattern.append("))$")
+        value_pattern = [
+            "^((",
+            "~[",
+            CPEComponent1_1._STRING, "]+",
+            ")|(",
+            "[",
+            CPEComponent1_1._STRING,
+            "]+(![",
+            CPEComponent1_1._STRING,
+            "]+)*",
+            "))$"]
 
         value_rxc = re.compile("".join(value_pattern))
         return value_rxc.match(comp_str) is not None
@@ -232,7 +220,7 @@ class CPEComponent1_1(CPEComponentSimple):
 
         for s in self._standard_value:
             idx = 0
-            while (idx < len(s)):
+            while idx < len(s):
                 c = s[idx]  # get the idx'th character of s
                 if c != "\\":
                     # unquoted characters pass thru unharmed
@@ -240,9 +228,7 @@ class CPEComponent1_1(CPEComponentSimple):
                 else:
                     # Escaped characters are examined
                     nextchr = s[idx + 1]
-
-                    if ((nextchr == ".") or (nextchr == "-")
-                       or (nextchr == "_")):
+                    if nextchr in ".-_":
                         # the period, hyphen and underscore pass unharmed
                         result.append(nextchr)
                         idx += 1
@@ -283,17 +269,17 @@ class CPEComponent1_1(CPEComponentSimple):
 
         for s in self._standard_value:
             idx = 0
-            while (idx < len(s)):
+            while idx < len(s):
                 thischar = s[idx]  # get the idx'th character of s
 
                 # alphanumerics (incl. underscore) pass untouched
-                if (CPEComponentSimple._is_alphanum(thischar)):
+                if CPEComponentSimple._is_alphanum(thischar):
                     result.append(thischar)
                     idx += 1
                     continue
 
                 # escape character
-                if (thischar == "\\"):
+                if thischar == "\\":
                     idx += 1
                     nxtchar = s[idx]
                     result.append(CPEComponentSimple._pct_encode_uri(nxtchar))
@@ -335,6 +321,7 @@ class CPEComponent1_1(CPEComponentSimple):
         Set the value of component. By default, the component has a simple
         value.
 
+        :param string comp_str: complete string value?
         :param string comp_att: attribute associated with value of component
         :returns: None
         :exception: ValueError - incorrect value of component
@@ -345,13 +332,14 @@ class CPEComponent1_1(CPEComponentSimple):
         >>> val2 = 'sp2'
         >>> att = CPEComponentSimple.ATT_VERSION
         >>> comp1 = CPEComponent1_1(val, att)
-        >>> comp1.set_value(val2, att)
+        >>> comp1.set_value(val2,)
         >>> comp1.get_value()
         'sp2'
         """
 
         super(CPEComponent1_1, self).set_value(comp_str, comp_att)
         self._is_negated = comp_str.startswith('~')
+
 
 if __name__ == "__main__":
     import doctest

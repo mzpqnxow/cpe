@@ -29,6 +29,7 @@ feedback about it, please contact:
 - Alejandro Galindo García: galindo.garcia.alejandro@gmail.com
 - Roberto Abdelkader Martínez Pérez: robertomartinezp@gmail.com
 """
+from abc import abstractmethod
 
 from .cpe import CPE
 from .comp.cpecomp import CPEComponent
@@ -95,17 +96,18 @@ class CPESet(object):
 
         setlen = self.__len__()
 
-        str = []
-        str.append("CPE Set version {0} contains {1} elements".format(
-            self.VERSION, setlen))
+        str_ = [
+            "CPE Set version {0} contains {1} elements".format(
+                self.VERSION, setlen)]
         if setlen > 0:
-            str.append(":")
+            str_.append(":")
 
             for i in range(0, setlen):
-                str.append("    {0}".format(self.K[i].__str__()))
+                str_.append("    {0}".format(self.K[i].__str__()))
 
-        return "\n".join(str)
+        return "\n".join(str_)
 
+    @abstractmethod
     def append(self, cpe):
         """
         Adds a CPE Name to the set if not already.
@@ -138,7 +140,7 @@ class CPESet(object):
         # If input CPE Name string is in set of CPE Name strings
         # not do searching more because there is a matching
         for k in self.K:
-            if (k.cpe_str == cpe.cpe_str):
+            if k.cpe_str == cpe.cpe_str:
                 return True
 
         # If "cpe" is an empty CPE Name any system matches
@@ -158,31 +160,29 @@ class CPESet(object):
                 # each element ek of k[p] in set K
 
                 for k in self.K:
-                    if (len(k) >= len(cpe)):
-                        elems_k = k.get(p)
+                    if len(k) < len(cpe):
+                        continue
 
-                        for ek in elems_k:
-                            # Matching
+                    elems_k = k.get(p)
 
-                            # Each component in element ec is compared with
-                            # each component in element ek
-                            for c in range(0, len(cpe)):
-                                key = CPEComponent.ordered_comp_parts[c]
-                                comp_cpe = ec.get(key)
-                                comp_k = ek.get(key)
-                                match = comp_k in comp_cpe
-
-                                if not match:
-                                    # Search compoment in another element ek[p]
-                                    break
-
-                                # Component analyzed
-
-                            if match:
-                                # Element matched
+                    for ek in elems_k:
+                        # Matching
+                        # Each component in element ec is compared with
+                        # each component in element ek
+                        for c in range(0, len(cpe)):
+                            key = CPEComponent.ordered_comp_parts[c]
+                            comp_cpe = ec.get(key)
+                            comp_k = ek.get(key)
+                            match = comp_k in comp_cpe
+                            if not match:
+                                # Search component in another element ek[p]
                                 break
+                            # Component analyzed
                         if match:
+                            # Element matched
                             break
+                    if match:
+                        break
                 # Next element in part in "cpe"
 
                 if not match:

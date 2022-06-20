@@ -124,6 +124,7 @@ class CPE2_3(CPE):
                                             self.STYLE,
                                             self.cpe_str)
 
+
 if __name__ == "__main__":
     import doctest
     doctest.testmod()

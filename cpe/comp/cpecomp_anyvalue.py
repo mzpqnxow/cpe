@@ -38,7 +38,7 @@ class CPEComponentAnyValue(CPEComponentLogical):
 
     For example, in version 2.3 of CPE specification, an component "any value"
     is other attribute in CPE name
-    cpe:2.3:a:microsft:windows:xp:\*:\*:\*:\*:\*:\*:\*.
+    cpe:2.3:a:microsoft:windows:xp:\*:\*:\*:\*:\*:\*:\*.
     """
 
     ####################
@@ -59,9 +59,7 @@ class CPEComponentAnyValue(CPEComponentLogical):
         from .cpecomp_empty import CPEComponentEmpty
         from .cpecomp_undefined import CPEComponentUndefined
 
-        return (isinstance(other, CPEComponentUndefined) or
-                isinstance(other, CPEComponentEmpty) or
-                isinstance(other, CPEComponentAnyValue))
+        return isinstance(other, (CPEComponentUndefined, CPEComponentEmpty, CPEComponentAnyValue))
 
     def __init__(self):
         """
@@ -80,6 +78,7 @@ class CPEComponentAnyValue(CPEComponentLogical):
         """
 
         return "<ANY>"
+
 
 if __name__ == "__main__":
     import doctest

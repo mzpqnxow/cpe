@@ -120,7 +120,7 @@ class CPE2_3_WFN(CPE2_3):
             errmsg = "Bad-formed CPE Name: WFN prefix not found"
             raise ValueError(errmsg)
 
-        # Check final backet
+        # Check final bracket
         if self._str[-1:] != "]":
             errmsg = "Bad-formed CPE Name: final bracket of WFN not found"
             raise ValueError(errmsg)
@@ -158,14 +158,12 @@ class CPE2_3_WFN(CPE2_3):
                         att_name)
                     raise ValueError(msg)
 
-                if not (att_value.startswith('"') and
-                        att_value.endswith('"')):
-
+                if not (att_value.startswith('"') and att_value.endswith('"')):
                     # Logical value
-                    strUpper = att_value.upper()
-                    if strUpper == CPEComponent2_3_WFN.VALUE_ANY:
+                    str_upper = att_value.upper()
+                    if str_upper == CPEComponent2_3_WFN.VALUE_ANY:
                         comp = CPEComponentAnyValue()
-                    elif strUpper == CPEComponent2_3_WFN.VALUE_NA:
+                    elif str_upper == CPEComponent2_3_WFN.VALUE_NA:
                         comp = CPEComponentNotApplicable()
                     else:
                         msg = "Invalid logical value '{0}'".format(att_value)
@@ -194,8 +192,7 @@ class CPE2_3_WFN(CPE2_3):
 
             part_comp = components[CPEComponent.ATT_PART]
             if isinstance(part_comp, CPEComponentLogical):
-                elements = []
-                elements.append(components)
+                elements = [components]
                 self[CPE.KEY_UNDEFINED] = elements
             else:
                 # Create internal structure of CPE Name in parts:
@@ -237,8 +234,7 @@ class CPE2_3_WFN(CPE2_3):
             for elem in elements:
                 comp = elem.get(att_name)
 
-                if (isinstance(comp, CPEComponentAnyValue) or
-                   isinstance(comp, CPEComponentUndefined)):
+                if isinstance(comp, (CPEComponentUndefined, CPEComponentAnyValue)):
                     value = CPEComponent2_3_WFN.VALUE_ANY
                 elif isinstance(comp, CPEComponentNotApplicable):
                     value = CPEComponent2_3_WFN.VALUE_NA
@@ -248,6 +244,7 @@ class CPE2_3_WFN(CPE2_3):
                 lc.append(value)
 
         return lc
+
 
 if __name__ == "__main__":
     import doctest

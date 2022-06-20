@@ -28,10 +28,14 @@ feedback about it, please contact:
 - Alejandro Galindo García: galindo.garcia.alejandro@gmail.com
 - Roberto Abdelkader Martínez Pérez: robertomartinezp@gmail.com
 """
+import abc
+import logging
+import re
 
 from .cpecomp import CPEComponent
 
-import re
+
+_logger = logging.getLogger(__name__)
 
 
 class CPEComponentSimple(CPEComponent):
@@ -110,9 +114,12 @@ class CPEComponentSimple(CPEComponent):
         >>> CPEComponentSimple._is_alphanum(c)
         False
         """
+        alphanum_rxc = re.compile(cls._ALPHANUM_PATTERN)
+        return alphanum_rxc.match(c) is not None
 
-        alphanum_rxc = re.compile(CPEComponentSimple._ALPHANUM_PATTERN)
-        return (alphanum_rxc.match(c) is not None)
+    @abc.abstractmethod
+    def _decode(self):
+        raise NotImplementedError
 
     @classmethod
     def _pct_encode_uri(cls, c):
@@ -137,10 +144,10 @@ class CPEComponentSimple(CPEComponent):
         '%40'
         """
 
-        CPEComponentSimple.spechar_to_pce['-'] = c  # bound without encoding
-        CPEComponentSimple.spechar_to_pce['.'] = c  # bound without encoding
+        cls.spechar_to_pce['-'] = c  # bound without encoding
+        cls.spechar_to_pce['.'] = c  # bound without encoding
 
-        return CPEComponentSimple.spechar_to_pce[c]
+        return cls.spechar_to_pce[c]
 
     ####################
     #  OBJECT METHODS  #
@@ -155,7 +162,6 @@ class CPEComponentSimple(CPEComponent):
         :returns: None
         :exception: ValueError - incorrect value of component
         """
-
         super(CPEComponentSimple, self).__init__(comp_str)
         self._standard_value = self._standard_value
         self.set_value(comp_str, comp_att)
@@ -191,7 +197,7 @@ class CPEComponentSimple(CPEComponent):
         """
 
         comp_str = self._encoded_value.lower()
-        lang_rxc = re.compile(CPEComponentSimple._LANGTAG_PATTERN)
+        lang_rxc = re.compile(self._LANGTAG_PATTERN)
         return lang_rxc.match(comp_str) is not None
 
     def _is_valid_part(self):
@@ -204,7 +210,7 @@ class CPEComponentSimple(CPEComponent):
         """
 
         comp_str = self._encoded_value.lower()
-        part_rxc = re.compile(CPEComponentSimple._PART_PATTERN)
+        part_rxc = re.compile(self._PART_PATTERN)
         return part_rxc.match(comp_str) is not None
 
     def _is_valid_value(self):
@@ -239,23 +245,15 @@ class CPEComponentSimple(CPEComponent):
         errmsg = "Invalid value of attribute '{0}': {1}".format(
             comp_att, comp_str)
 
-        # Check part (system type) value
-        if comp_att == CPEComponentSimple.ATT_PART:
-            if not self._is_valid_part():
-                raise ValueError(errmsg)
+        comp_map_validator = {
+            self.ATT_PART: self._is_valid_part,
+            self.ATT_LANGUAGE: self._is_valid_language,
+            self.ATT_EDITION: self._is_valid_edition,
+        }
 
-        # Check language value
-        elif comp_att == CPEComponentSimple.ATT_LANGUAGE:
-            if not self._is_valid_language():
-                raise ValueError(errmsg)
-
-        # Check edition value
-        elif comp_att == CPEComponentSimple.ATT_EDITION:
-            if not self._is_valid_edition():
-                raise ValueError(errmsg)
-
-        # Check other type of component value
-        elif not self._is_valid_value():
+        validator = comp_map_validator.get(comp_att, self._is_valid_value)
+        _logger.debug('Using validator function=%s for comp_att=%s', validator.__name__, comp_att)
+        if not validator():
             raise ValueError(errmsg)
 
     def as_fs(self):
@@ -273,7 +271,7 @@ class CPEComponentSimple(CPEComponent):
         s = self._standard_value
         result = []
         idx = 0
-        while (idx < len(s)):
+        while idx < len(s):
 
             c = s[idx]  # get the idx'th character of s
             if c != "\\":
@@ -314,29 +312,29 @@ class CPEComponentSimple(CPEComponent):
         s = self._standard_value
         result = []
         idx = 0
-        while (idx < len(s)):
+        while idx < len(s):
             thischar = s[idx]  # get the idx'th character of s
 
             # alphanumerics (incl. underscore) pass untouched
-            if (CPEComponentSimple._is_alphanum(thischar)):
+            if self._is_alphanum(thischar):
                 result.append(thischar)
                 idx += 1
                 continue
 
             # escape character
-            if (thischar == "\\"):
+            if thischar == "\\":
                 idx += 1
                 nxtchar = s[idx]
-                result.append(CPEComponentSimple._pct_encode_uri(nxtchar))
+                result.append(self._pct_encode_uri(nxtchar))
                 idx += 1
                 continue
 
             # Bind the unquoted '?' special character to "%01".
-            if (thischar == "?"):
+            if thischar == "?":
                 result.append("%01")
 
             # Bind the unquoted '*' special character to "%02".
-            if (thischar == "*"):
+            if thischar == "*":
                 result.append("%02")
 
             idx += 1
@@ -388,6 +386,7 @@ class CPEComponentSimple(CPEComponent):
 
         # Convert encoding value to standard value (WFN)
         self._decode()
+
 
 if __name__ == "__main__":
     import doctest

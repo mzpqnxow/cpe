@@ -175,10 +175,9 @@ class CPEComponent2_3_URI(CPEComponent2_3):
         s = self._encoded_value
         embedded = False
 
-        errmsg = []
-        errmsg.append("Invalid value: ")
+        errmsg = ["Invalid value: "]
 
-        while (idx < len(s)):
+        while idx < len(s):
             errmsg.append(s)
             errmsg_str = "".join(errmsg)
 
@@ -186,14 +185,14 @@ class CPEComponent2_3_URI(CPEComponent2_3):
             c = s[idx]
 
             # Deal with dot, hyphen and tilde: decode with quoting
-            if ((c == '.') or (c == '-') or (c == '~')):
+            if c in '.-~':
                 result.append("\\")
                 result.append(c)
                 idx += 1
                 embedded = True  # a non-%01 encountered
                 continue
 
-            if (c != '%'):
+            if c != '%':
                 result.append(c)
                 idx += 1
                 embedded = True  # a non-%01 encountered
@@ -206,9 +205,9 @@ class CPEComponent2_3_URI(CPEComponent2_3):
                 # If %01 legal at beginning or end
                 # embedded is false, so must be preceded by %01
                 # embedded is true, so must be followed by %01
-                if (((idx == 0) or (idx == (len(s)-3))) or
-                    ((not embedded) and (s[idx - 3:idx] == CPEComponent2_3_URI.WILDCARD_ONE)) or
-                    (embedded and (len(s) >= idx + 6) and (s[idx + 3:idx + 6] == CPEComponent2_3_URI.WILDCARD_ONE))):
+                if (((idx == 0) or (idx == (len(s) - 3))) or (
+                    (not embedded) and (s[idx - 3:idx] == CPEComponent2_3_URI.WILDCARD_ONE)) or (
+                        embedded and (len(s) >= idx + 6) and (s[idx + 3:idx + 6] == CPEComponent2_3_URI.WILDCARD_ONE))):
 
                     # A percent-encoded question mark is found
                     # at the beginning or the end of the string,
@@ -221,13 +220,12 @@ class CPEComponent2_3_URI(CPEComponent2_3):
                     raise ValueError(errmsg_str)
 
             elif form == CPEComponent2_3_URI.WILDCARD_MULTI:
-                if ((idx == 0) or (idx == (len(s) - 3))):
-                    # Percent-encoded asterisk is at the beginning
-                    # or the end of the string, as required.
-                    # Decode to unquoted form.
-                    result.append(CPEComponent2_3_WFN.WILDCARD_MULTI)
-                else:
+                if idx != 0 and idx != len(s) - 3:
                     raise ValueError(errmsg_str)
+                # Percent-encoded asterisk is at the beginning
+                # or the end of the string, as required.
+                # Decode to unquoted form.
+                result.append(CPEComponent2_3_WFN.WILDCARD_MULTI)
 
             elif form in CPEComponent2_3_URI.pce_char_to_decode.keys():
                 value = CPEComponent2_3_URI.pce_char_to_decode[form]
@@ -254,18 +252,9 @@ class CPEComponent2_3_URI(CPEComponent2_3):
 
         comp_str = self._standard_value[0]
 
-        packed = []
-        packed.append("(")
-        packed.append(CPEComponent2_3_URI.SEPARATOR_PACKED_EDITION)
-        packed.append(CPEComponent2_3_URI._string)
-        packed.append("){5}")
+        packed = ["(", CPEComponent2_3_URI.SEPARATOR_PACKED_EDITION, CPEComponent2_3_URI._string, "){5}"]
 
-        value_pattern = []
-        value_pattern.append("^(")
-        value_pattern.append(CPEComponent2_3_URI._string)
-        value_pattern.append("|")
-        value_pattern.append("".join(packed))
-        value_pattern.append(")$")
+        value_pattern = ["^(", CPEComponent2_3_URI._string, "|", "".join(packed), ")$"]
 
         value_rxc = re.compile("".join(value_pattern))
         return value_rxc.match(comp_str) is not None
@@ -281,6 +270,7 @@ class CPEComponent2_3_URI(CPEComponent2_3):
 
         comp_str = self._standard_value[0]
         return CPEComponent2_3_URI._value_rxc.match(comp_str) is not None
+
 
 if __name__ == "__main__":
     import doctest

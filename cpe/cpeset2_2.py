@@ -115,6 +115,7 @@ class CPESet2_2(CPESet):
 
         return super(CPESet2_2, self).name_match(cpe)
 
+
 if __name__ == "__main__":
     import doctest
     doctest.testmod()

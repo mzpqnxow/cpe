@@ -96,11 +96,11 @@ class CPEComponent2_2(CPEComponentSimple):
         idx = 0
         s = self._encoded_value
 
-        while (idx < len(s)):
+        while idx < len(s):
             # Get the idx'th character of s
             c = s[idx]
 
-            if (c in CPEComponent2_2.NON_STANDARD_VALUES):
+            if c in self.NON_STANDARD_VALUES:
                 # Escape character
                 result.append("\\")
                 result.append(c)
@@ -122,7 +122,8 @@ class CPEComponent2_2(CPEComponentSimple):
         """
 
         comp_str = self._encoded_value
-        return CPEComponent2_2._value_rxc.match(comp_str) is not None
+        return self._value_rxc.match(comp_str) is not None
+
 
 if __name__ == "__main__":
     import doctest

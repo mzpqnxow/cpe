@@ -34,7 +34,7 @@ class CPEComponentUndefined(CPEComponentLogical):
     compatible with the components of all versions of CPE specification.
 
     For example, in version 1.1 of CPE specification, an undefined component
-    is edition attribute in CPE name cpe:/microsft:windows:xp.
+    is edition attribute in CPE name cpe:/microsoft:windows:xp.
     """
 
     ####################
@@ -65,17 +65,14 @@ class CPEComponentUndefined(CPEComponentLogical):
         from .cpecomp_anyvalue import CPEComponentAnyValue
         from .cpecomp_empty import CPEComponentEmpty
 
-        return (isinstance(other, CPEComponentUndefined) or
-                isinstance(other, CPEComponentEmpty) or
-                isinstance(other, CPEComponentAnyValue))
+        return isinstance(other, (CPEComponentEmpty, CPEComponentUndefined, CPEComponentAnyValue))
 
     def __init__(self):
         """
         Initializes the component.
         """
 
-        super(CPEComponentUndefined, self).__init__(
-            CPEComponentLogical._VALUE_INT_UNDEFINED)
+        super(CPEComponentUndefined, self).__init__(CPEComponentLogical._VALUE_INT_UNDEFINED)
 
     def __str__(self):
         """
@@ -86,6 +83,7 @@ class CPEComponentUndefined(CPEComponentLogical):
         """
 
         return "<UNDEFINED>"
+
 
 if __name__ == "__main__":
     import doctest

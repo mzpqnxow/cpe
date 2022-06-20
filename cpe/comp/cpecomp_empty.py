@@ -37,7 +37,7 @@ class CPEComponentEmpty(CPEComponentLogical):
     compatible with the components of all versions of CPE specification.
 
     For example, in version 1.1 of CPE specification, an empty component
-    is version attribute in CPE name cpe:/microsft:windows::sp2.
+    is version attribute in CPE name cpe:/microsoft:windows::sp2.
     """
 
     ####################
@@ -57,18 +57,14 @@ class CPEComponentEmpty(CPEComponentLogical):
 
         from .cpecomp_anyvalue import CPEComponentAnyValue
         from .cpecomp_undefined import CPEComponentUndefined
-
-        return (isinstance(other, CPEComponentEmpty) or
-                isinstance(other, CPEComponentUndefined) or
-                isinstance(other, CPEComponentAnyValue))
+        return isinstance(other, (CPEComponentUndefined, CPEComponentEmpty, CPEComponentAnyValue))
 
     def __init__(self):
         """
         Initializes the component.
         """
 
-        super(CPEComponentEmpty, self).__init__(
-            CPEComponentLogical._VALUE_INT_EMPTY)
+        super(CPEComponentEmpty, self).__init__(CPEComponentLogical._VALUE_INT_EMPTY)
 
     def __str__(self):
         """

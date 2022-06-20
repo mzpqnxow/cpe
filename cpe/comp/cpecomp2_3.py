@@ -85,21 +85,14 @@ class CPEComponent2_3(CPEComponentSimple):
             | ??a
             | ???
             """
-            lang_pattern = []
-            lang_pattern.append("^(\\")
-            lang_pattern.append(self.WILDCARD_MULTI)
-            lang_pattern.append("[a-z]{1,2}")
-            lang_pattern.append("|\\")
-            lang_pattern.append(self.WILDCARD_ONE)
-            lang_pattern.append("(([a-z][a-z]?)|(\\")
-            lang_pattern.append(self.WILDCARD_ONE)
-            lang_pattern.append("(\\")
-            lang_pattern.append(self.WILDCARD_ONE)
-            lang_pattern.append("|[a-z])?))")
-            lang_pattern.append("|([a-z]{2,3}))$")
-
+            lang_pattern = [
+                "^(\\",
+                self.WILDCARD_MULTI, "[a-z]{1,2}", "|\\",
+                self.WILDCARD_ONE, "(([a-z][a-z]?)|(\\",
+                self.WILDCARD_ONE, "(\\",
+                self.WILDCARD_ONE, "|[a-z])?))",
+                "|([a-z]{2,3}))$"]
             lang_rxc = re.compile("".join(lang_pattern))
-
             return lang_rxc.match(value)
 
         def check_language_without_region(self, value):
@@ -119,45 +112,33 @@ class CPEComponent2_3(CPEComponentSimple):
             | ?a*
             | ?a?
             """
-            lang_pattern = []
-            lang_pattern.append("^([a-z]")
-            lang_pattern.append("([a-z](\\")
-            lang_pattern.append(self.WILDCARD_MULTI)
-            lang_pattern.append("|\\")
-            lang_pattern.append(self.WILDCARD_ONE)
-            lang_pattern.append("|")
-            lang_pattern.append("([a-z]\\")
-            lang_pattern.append(self.WILDCARD_MULTI)
-            lang_pattern.append("))")
-            lang_pattern.append("|")
-            lang_pattern.append("\\")
-            lang_pattern.append(self.WILDCARD_ONE)
-            lang_pattern.append("(\\")
-            lang_pattern.append(self.WILDCARD_ONE)
-            lang_pattern.append(")?")
-            lang_pattern.append("|\\")
-            lang_pattern.append(self.WILDCARD_MULTI)
-            lang_pattern.append(")|\\")
-            lang_pattern.append(self.WILDCARD_ONE)
-            lang_pattern.append("[a-z](\\")
-            lang_pattern.append(self.WILDCARD_MULTI)
-            lang_pattern.append("|\\")
-            lang_pattern.append(self.WILDCARD_ONE)
-            lang_pattern.append(")")
-            lang_pattern.append("|\\")
-            lang_pattern.append(self.WILDCARD_MULTI)
-            lang_pattern.append("[a-z](\\")
-            lang_pattern.append(self.WILDCARD_MULTI)
-            lang_pattern.append("|\\")
-            lang_pattern.append(self.WILDCARD_ONE)
-            lang_pattern.append(")")
-            lang_pattern.append(")$")
+            lang_pattern = [
+                "^([a-z]",
+                "([a-z](\\",
+                self.WILDCARD_MULTI, "|\\",
+                self.WILDCARD_ONE, "|",
+                "([a-z]\\",
+                self.WILDCARD_MULTI, "))",
+                "|",
+                "\\",
+                self.WILDCARD_ONE, "(\\",
+                self.WILDCARD_ONE, ")?",
+                "|\\",
+                self.WILDCARD_MULTI, ")|\\",
+                self.WILDCARD_ONE, "[a-z](\\",
+                self.WILDCARD_MULTI, "|\\",
+                self.WILDCARD_ONE, ")",
+                "|\\",
+                self.WILDCARD_MULTI, "[a-z](\\",
+                self.WILDCARD_MULTI, "|\\",
+                self.WILDCARD_ONE, ")",
+                ")$"]
 
             lang_rxc = re.compile("".join(lang_pattern))
 
             return lang_rxc.match(value)
 
-        def check_region_with_language(self, value):
+        def check_region_with_language(self, _value):
             """
             Check possible values in region part when language part exists.
 
@@ -174,32 +155,22 @@ class CPEComponent2_3(CPEComponentSimple):
             | 111
             | ???
             """
-            region_pattern = []
-            region_pattern.append("^(")
-            region_pattern.append("(\\")
-            region_pattern.append(self.WILDCARD_MULTI)
-            region_pattern.append(")|((\\")
-            region_pattern.append(self.WILDCARD_ONE)
-            region_pattern.append("){2,3})|([a-z]([a-z]|\\")
-            region_pattern.append(self.WILDCARD_MULTI)
-            region_pattern.append("|\\")
-            region_pattern.append(self.WILDCARD_ONE)
-            region_pattern.append("))|([0-9](\\")
-            region_pattern.append(self.WILDCARD_MULTI)
-            region_pattern.append("|\\")
-            region_pattern.append(self.WILDCARD_ONE)
-            region_pattern.append("(\\")
-            region_pattern.append(self.WILDCARD_ONE)
-            region_pattern.append(")?|[0-9][0-9\\")
-            region_pattern.append(self.WILDCARD_MULTI)
-            region_pattern.append("\\")
-            region_pattern.append(self.WILDCARD_ONE)
-            region_pattern.append("])))$")
+            region_pattern = [
+                "^(", "(\\",
+                self.WILDCARD_MULTI, ")|((\\",
+                self.WILDCARD_ONE, "){2,3})|([a-z]([a-z]|\\",
+                self.WILDCARD_MULTI, "|\\",
+                self.WILDCARD_ONE, "))|([0-9](\\",
+                self.WILDCARD_MULTI, "|\\",
+                self.WILDCARD_ONE, "(\\",
+                self.WILDCARD_ONE, ")?|[0-9][0-9\\",
+                self.WILDCARD_MULTI, "\\",
+                self.WILDCARD_ONE, "])))$"]
 
             region_rxc = re.compile("".join(region_pattern))
             return region_rxc.match(region)
 
-        def check_region_without_language(self, value):
+        def check_region_without_language(self, _value):
             """
             Check possible values in region part when language part not exist.
 
@@ -208,13 +179,12 @@ class CPEComponent2_3(CPEComponentSimple):
             | *11
             | *1
             """
-            region_pattern = []
-            region_pattern.append("^(")
-            region_pattern.append("(\\")
-            region_pattern.append(self.WILDCARD_MULTI)
-            region_pattern.append("[0-9])")
-            region_pattern.append("([0-9]([0-9])?)?")
-            region_pattern.append(")$")
+            region_pattern = [
+                "^(",
+                "(\\",
+                self.WILDCARD_MULTI, "[0-9])",
+                "([0-9]([0-9])?)?",
+                ")$"]
 
             region_rxc = re.compile("".join(region_pattern))
             return region_rxc.match(region)
@@ -232,7 +202,7 @@ class CPEComponent2_3(CPEComponentSimple):
             if region_exists:
                 # Region part exists; check it
                 region = parts[1]
-                return (check_region_with_language(self, region) is not None)
+                return check_region_with_language(self, region) is not None
             else:
                 # Not region part
                 return True
@@ -254,16 +224,12 @@ class CPEComponent2_3(CPEComponentSimple):
         """
 
         comp_str = self._encoded_value
-
         # Check if value of component do not have wildcard
-        if ((comp_str.find(self.WILDCARD_ONE) == -1) and
-           (comp_str.find(self.WILDCARD_MULTI) == -1)):
-
+        if comp_str.find(self.WILDCARD_ONE) == -1 and comp_str.find(self.WILDCARD_MULTI) == -1:
             return super(CPEComponent2_3, self)._is_valid_part()
 
         # Compilation of regular expression associated with value of part
-        part_pattern = "^(\{0}|\{1})$".format(self.WILDCARD_ONE,
-                                              self.WILDCARD_MULTI)
+        part_pattern = "^(\{0}|\{1})$".format(self.WILDCARD_ONE, self.WILDCARD_MULTI)
         part_rxc = re.compile(part_pattern)
 
         return part_rxc.match(comp_str) is not None

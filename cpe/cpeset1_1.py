@@ -117,7 +117,7 @@ class CPESet1_1(CPESet):
         # If input CPE Name string is in set of CPE Name strings
         # not do searching more because there is a matching
         for k in self.K:
-            if (k.cpe_str == cpe.cpe_str):
+            if k.cpe_str == cpe.cpe_str:
                 return True
 
         # There are not a CPE Name string in set equal to
@@ -147,7 +147,7 @@ class CPESet1_1(CPESet):
                             match = comp_k in comp_cpe
 
                             if not match:
-                                # Search compoment in another element ek[p]
+                                # Search component in another element ek[p]
                                 break
 
                             # Component analyzed
@@ -167,6 +167,7 @@ class CPESet1_1(CPESet):
 
         # All parts in input CPE Name matched
         return True
+
 
 if __name__ == "__main__":
     import doctest

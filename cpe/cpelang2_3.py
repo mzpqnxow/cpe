@@ -29,6 +29,7 @@ feedback about it, please contact:
 - Alejandro Galindo García: galindo.garcia.alejandro@gmail.com
 - Roberto Abdelkader Martínez Pérez: robertomartinezp@gmail.com
 """
+from abc import abstractmethod
 
 from .cpeset2_3 import CPESet2_3
 from .cpelang import CPELanguage
@@ -72,7 +73,7 @@ class CPELanguage2_3(CPELanguage):
 
         for n in cpeset:
             # Need to convert each n from bound form to WFN
-            if (CPESet2_3.cpe_superset(wfn, n)):
+            if CPESet2_3.cpe_superset(wfn, n):
                 return True
 
         return False
@@ -95,14 +96,14 @@ class CPELanguage2_3(CPELanguage):
         CHECK_ID = "check-id"
 
         checksystemID = cpel_dom.getAttribute(CHECK_SYSTEM)
-        if (checksystemID == "http://oval.mitre.org/XMLSchema/ovaldefinitions-5"):
+        if checksystemID == "http://oval.mitre.org/XMLSchema/ovaldefinitions-5":
             # Perform an OVAL check.
             # First attribute is the URI of an OVAL definitions file.
             # Second attribute is an OVAL definition ID.
             return CPELanguage2_3._ovalcheck(cpel_dom.getAttribute(CHECK_LOCATION),
                                              cpel_dom.getAttribute(CHECK_ID))
 
-        if (checksystemID == "http://scap.nist.gov/schema/ocil/2"):
+        if checksystemID == "http://scap.nist.gov/schema/ocil/2":
             # Perform an OCIL check.
             # First attribute is the URI of an OCIL questionnaire file.
             # Second attribute is OCIL questionnaire ID.
@@ -114,7 +115,8 @@ class CPELanguage2_3(CPELanguage):
         return False
 
     @classmethod
-    def _ocilcheck(location, ocil_id):
+    @abstractmethod
+    def _ocilcheck(cls, location, ocil_id):
         """
         Perform an OCIL check.
 
@@ -128,7 +130,8 @@ class CPELanguage2_3(CPELanguage):
         raise NotImplementedError(errmsg)
 
     @classmethod
-    def _ovalcheck(location, oval_id):
+    @abstractmethod
+    def _ovalcheck(cls, location, oval_id):
         """
         Perform an OVAL check.
 
@@ -153,11 +156,11 @@ class CPELanguage2_3(CPELanguage):
 
         try:
             fs = CPE2_3_FS(boundname)
-        except:
+        except:  # noqa, pylint: disable=broad-except
             # CPE name is not formatted string
             try:
                 uri = CPE2_3_URI(boundname)
-            except:
+            except:  # noqa, pylint: disable=broad-except
                 # CPE name is not URI but WFN
                 return CPE2_3_WFN(boundname)
             else:
@@ -212,8 +215,17 @@ class CPELanguage2_3(CPELanguage):
         if cpel_dom is None:
             cpel_dom = self.document
 
+        required_tags = (
+            TAG_ROOT,
+            TAG_PLATSPEC, TAG_PLATFORM,
+            TAG_CPE, TAG_CHECK_CPE,
+            TAG_LOGITEST)
+
+        if cpel_dom.nodeName not in required_tags:
+            return False
+
         # Identify the root element
-        if cpel_dom.nodeName == TAG_ROOT or cpel_dom.nodeName == TAG_PLATSPEC:
+        if cpel_dom.nodeName in (TAG_ROOT, TAG_PLATSPEC):
             for node in cpel_dom.childNodes:
                 if node.nodeName == TAG_PLATSPEC:
                     return self.language_match(cpeset, node)
@@ -239,42 +251,38 @@ class CPELanguage2_3(CPELanguage):
 
         # Identify a check of CPE names (OVAL, OCIL...)
         elif cpel_dom.nodeName == TAG_CHECK_CPE:
-            return CPELanguage2_3._check_fact_ref_Eval(cpel_dom)
+            return CPELanguage2_3._check_fact_ref_Eval(cpel_dom)  # noqa, pylint: disable=protected-member
 
         # Identify a logical operator element
         elif cpel_dom.nodeName == TAG_LOGITEST:
             count = 0
-            len = 0
+            len_ = 0
             answer = False
 
             for node in cpel_dom.childNodes:
                 if node.nodeName.find("#") == 0:
                     continue
-                len = len + 1
+                len_ += 1
                 result = self.language_match(cpeset, node)
                 if result:
-                    count = count + 1
+                    count += 1
                 elif result == ERROR:
                     answer = ERROR
 
             operator = cpel_dom.getAttribute(ATT_OP).upper()
 
             if operator == ATT_OP_AND:
-                if count == len:
+                if count == len_:
                     answer = True
             elif operator == ATT_OP_OR:
                 if count > 0:
                     answer = True
 
             operator_not = cpel_dom.getAttribute(ATT_NEGATE)
-            if operator_not:
-                if ((operator_not.upper() == ATT_NEGATE_TRUE) and
-                   (answer != ERROR)):
-                    answer = not answer
-
+            if operator_not and operator_not.upper() == ATT_NEGATE_TRUE and answer != ERROR:
+                answer = not answer
             return answer
-        else:
-            return False
+
 
 if __name__ == "__main__":
     import doctest

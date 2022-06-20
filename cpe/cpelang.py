@@ -29,7 +29,7 @@ feedback about it, please contact:
 - Alejandro Galindo García: galindo.garcia.alejandro@gmail.com
 - Roberto Abdelkader Martínez Pérez: robertomartinezp@gmail.com
 """
-
+from abc import abstractmethod
 from xml.dom import minidom
 
 
@@ -51,10 +51,10 @@ class CPELanguage(object):
         """
         Create an object that contains the input expression in
         the CPE Language (a set of CPE Names) and
-        the DOM tree asociated with expression.
+        the DOM tree associated with expression.
 
         :param string expression: XML content in string or a path to XML file
-        :param strint isFile: indicates whether expression is a XML file or
+        :param string isFile: indicates whether expression is a XML file or
             XML content string
         :returns: None
         """
@@ -83,6 +83,7 @@ class CPELanguage(object):
         return "Expression of CPE language version {0}:\n{1}".format(
             self.VERSION, self.expression)
 
+    @abstractmethod
     def language_match(self, cpeset, cpel_dom=None):
         """
         Accepts a set of known CPE Names and an expression in the CPE language,

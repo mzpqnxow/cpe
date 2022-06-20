@@ -28,8 +28,10 @@ feedback about it, please contact:
 - Alejandro Galindo García: galindo.garcia.alejandro@gmail.com
 - Roberto Abdelkader Martínez Pérez: robertomartinezp@gmail.com
 """
+import abc
+import logging
 
-import types
+_logger = logging.getLogger(__name__)
 
 
 class CPEComponent(object):
@@ -77,6 +79,11 @@ class CPEComponent(object):
     #: alphanumeric strings characterizing the particular release version
     #: of the product
     ATT_VERSION = "version"
+
+    #: Package attribute of CPE Name that indicates vendor-specific
+    #: alphanumeric strings characterizing the particular package
+    #: of the product
+    ATT_PACKAGE = "package"
 
     #: Version attribute of CPE Name that indicates vendor-specific
     #: alphanumeric strings characterizing the particular update,
@@ -196,8 +203,8 @@ class CPEComponent(object):
         >>> CPEComponent.is_valid_attribute(att)
         True
         """
-
-        return att_name in CPEComponent.CPE_COMP_KEYS_EXTENDED
+        _logger.debug('Checking for %s in (%s)', att_name, '|'.join(cls.CPE_COMP_KEYS_EXTENDED))
+        return att_name in cls.CPE_COMP_KEYS_EXTENDED
 
     ####################
     #  OBJECT METHODS  #
@@ -216,14 +223,7 @@ class CPEComponent(object):
         from .cpecomp_empty import CPEComponentEmpty
         from .cpecomp_anyvalue import CPEComponentAnyValue
 
-        if ((self == item) or
-           isinstance(self, CPEComponentUndefined) or
-           isinstance(self, CPEComponentEmpty) or
-           isinstance(self, CPEComponentAnyValue)):
-
-            return True
-
-        return False
+        return self == item or isinstance(self, (CPEComponentEmpty, CPEComponentAnyValue, CPEComponentUndefined))
 
     def __eq__(self, other):
         """
@@ -245,14 +245,12 @@ class CPEComponent(object):
                 # Other is version 1.1 of CPE Name
                 value_self = self._standard_value
                 value_other = other._standard_value
-
             # Other is higher version than to 1.1 of CPE Name
             elif len_self == 1:
                 value_self = self._standard_value[0]
                 value_other = other._standard_value
-
             else:
-                # The comparation between components is impossible
+                # The comparison between components is impossible
                 return False
         else:
             # Self is higher version than 1.1 of CPE Name
@@ -263,14 +261,17 @@ class CPEComponent(object):
                     value_other = other._standard_value[0]
 
                 else:
-                    # The comparation between components is impossible
+                    # The comparison between components is impossible
                     return False
             else:
                 value_self = self._standard_value
                 value_other = other._standard_value
 
-        return ((value_self == value_other) and
-               (self._is_negated == other._is_negated))
+        return value_self == value_other and self._is_negated == other._is_negated
+
+    @abc.abstractmethod
+    def _decode(self):
+        raise NotImplementedError
 
     def __init__(self, comp_str):
         """
@@ -306,6 +307,7 @@ class CPEComponent(object):
         """
 
         return "{0}()".format(self.__class__.__name__)
+
 
 if __name__ == "__main__":
     import doctest

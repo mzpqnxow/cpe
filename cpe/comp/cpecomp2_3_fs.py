@@ -105,16 +105,15 @@ class CPEComponent2_3_FS(CPEComponent2_3):
         s = self._encoded_value
         embedded = False
 
-        errmsg = []
-        errmsg.append("Invalid character '")
+        errmsg = ["Invalid character '"]
 
-        while (idx < len(s)):
+        while idx < len(s):
             c = s[idx]  # get the idx'th character of s
             errmsg.append(c)
             errmsg.append("'")
             errmsg_str = "".join(errmsg)
 
-            if (CPEComponentSimple._is_alphanum(c)):
+            if CPEComponentSimple._is_alphanum(c):
                 # Alphanumeric characters pass untouched
                 result.append(c)
                 idx += 1
@@ -129,7 +128,7 @@ class CPEComponent2_3_FS(CPEComponent2_3):
                 embedded = True
                 continue
 
-            if (c == CPEComponent2_3_FS.WILDCARD_MULTI):
+            if c == CPEComponent2_3_FS.WILDCARD_MULTI:
                 # An unquoted asterisk must appear at the beginning or
                 # end of the string.
                 if (idx == 0) or (idx == (len(s) - 1)):
@@ -140,21 +139,21 @@ class CPEComponent2_3_FS(CPEComponent2_3):
                 else:
                     raise ValueError(errmsg_str)
 
-            if (c == CPEComponent2_3_FS.WILDCARD_ONE):
+            if c == CPEComponent2_3_FS.WILDCARD_ONE:
                 # An unquoted question mark must appear at the beginning or
                 # end of the string, or in a leading or trailing sequence:
                 # - ? legal at beginning or end
                 # - embedded is false, so must be preceded by ?
                 # - embedded is true, so must be followed by ?
-                if (((idx == 0) or (idx == (len(s) - 1))) or
-                   ((not embedded) and (s[idx - 1] == CPEComponent2_3_FS.WILDCARD_ONE)) or
-                   (embedded and (s[idx + 1] == CPEComponent2_3_FS.WILDCARD_ONE))):
-                    result.append(c)
-                    idx += 1
-                    embedded = False
-                    continue
-                else:
+                if idx != 0 and idx != (len(s) - 1) and (
+                    embedded or s[idx - 1] != CPEComponent2_3_FS.WILDCARD_ONE) and (
+                        not embedded or s[idx + 1] != CPEComponent2_3_FS.WILDCARD_ONE):
                     raise ValueError(errmsg_str)
+
+                result.append(c)
+                idx += 1
+                embedded = False
+                continue
 
             # all other characters must be quoted
             result.append("\\")
@@ -175,6 +174,7 @@ class CPEComponent2_3_FS(CPEComponent2_3):
 
         comp_str = self._standard_value[0]
         return CPEComponent2_3_FS._part_value_rxc.match(comp_str) is not None
+
 
 if __name__ == "__main__":
     import doctest

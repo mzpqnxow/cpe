@@ -99,15 +99,14 @@ class CPE1_1(CPE):
 
         TEST: good index
 
-        >>> str = 'cpe:///sun_microsystem:sun@os:5.9:#update'
-        >>> c = CPE1_1(str)
+        >>> str_ = 'cpe:///sun_microsystem:sun@os:5.9:#update'
+        >>> c = CPE1_1(str_)
         >>> c[0]
         CPEComponent1_1(sun_microsystem)
         """
 
         count = 0
-        errmsg = "Component index '{0}' of CPE Name out of range".format(
-            i.__str__())
+        errmsg = "Component index '{0}' of CPE Name out of range".format(i)
 
         for pk in CPE.CPE_PART_KEYS:
             elements = self.get(pk)
@@ -117,7 +116,7 @@ class CPE1_1(CPE):
                     # This attribute is ignored
                     if ck != CPEComponent.ATT_PART:
                         comp = elem.get(ck)
-                        if (count == i):
+                        if count == i:
                             if not isinstance(comp, CPEComponentUndefined):
                                 return comp
                             else:
@@ -137,8 +136,8 @@ class CPE1_1(CPE):
         TEST: a CPE Name with two parts (hw and os) and
         some elements empty and with values
 
-        >>> str = "cpe:/cisco::3825/cisco:ios:12.3:enterprise"
-        >>> c = CPE1_1(str)
+        >>> str_ = "cpe:/cisco::3825/cisco:ios:12.3:enterprise"
+        >>> c = CPE1_1(str_)
         >>> len(c)
         7
         """
@@ -179,7 +178,7 @@ class CPE1_1(CPE):
         """
 
         # CPE Name must not have whitespaces
-        if (self.cpe_str.find(" ") != -1):
+        if self.cpe_str.find(" ") != -1:
             errmsg = "Bad-formed CPE Name: it must not have whitespaces"
             raise ValueError(errmsg)
 
@@ -190,7 +189,7 @@ class CPE1_1(CPE):
         #  Validation of CPE Name parts  #
         # ################################
 
-        if (parts_match is None):
+        if parts_match is None:
             errmsg = "Bad-formed CPE Name: not correct definition of CPE Name parts"
             raise ValueError(errmsg)
 
@@ -201,7 +200,7 @@ class CPE1_1(CPE):
             part = parts_match.group(pk)
             elements = []
 
-            if (part is not None):
+            if part is not None:
                 # Part of CPE Name defined
 
                 # ###############################
@@ -234,7 +233,6 @@ class CPE1_1(CPE):
 
                         # Identification of component name
                         components[comp_att] = comp
-
                         j += 1
 
                     # Adds the components of version 2.3 of CPE not defined
@@ -245,15 +243,11 @@ class CPE1_1(CPE):
 
                     # Get the type of system associated with CPE Name and
                     # store it in element as component
-                    if (pk == CPE.KEY_HW):
-                        components[CPEComponent.ATT_PART] = CPEComponent1_1(
-                            CPEComponent.VALUE_PART_HW, CPEComponent.ATT_PART)
-                    elif (pk == CPE.KEY_OS):
-                        components[CPEComponent.ATT_PART] = CPEComponent1_1(
-                            CPEComponent.VALUE_PART_OS, CPEComponent.ATT_PART)
-                    elif (pk == CPE.KEY_APP):
-                        components[CPEComponent.ATT_PART] = CPEComponent1_1(
-                            CPEComponent.VALUE_PART_APP, CPEComponent.ATT_PART)
+                    for key in (CPEComponent.VALUE_PART_HW, CPEComponent.VALUE_PART_OS, CPEComponent.VALUE_PART_APP):
+                        if pk == self._system_and_parts[key]:
+                            components[CPEComponent.ATT_PART] = CPEComponent1_1(
+                                key, CPEComponent.ATT_PART)
+                            break
 
                     # Store the element identified
                     elements.append(components)
@@ -271,9 +265,7 @@ class CPE1_1(CPE):
         :rtype: string
         :exception: TypeError - incompatible version
         """
-
-        wfn = []
-        wfn.append(CPE2_3_WFN.CPE_PREFIX)
+        wfn = [CPE2_3_WFN.CPE_PREFIX]
 
         for ck in CPEComponent.CPE_COMP_KEYS:
             lc = self._get_attribute_components(ck)
@@ -285,27 +277,19 @@ class CPE1_1(CPE):
                     self.VERSION)
                 raise TypeError(errmsg)
 
-            else:
-                comp = lc[0]
+            comp = lc[0]
 
-                if (isinstance(comp, CPEComponentUndefined) or
-                   isinstance(comp, CPEComponentEmpty)):
+            if isinstance(comp, (CPEComponentUndefined, CPEComponentEmpty)):
+                # Do not set the attribute
+                continue
+            v = [
+                ck, "=",
+                # Get the value of WFN of component
+                '"', comp.as_wfn(), '"']
 
-                    # Do not set the attribute
-                    continue
-                else:
-                    v = []
-                    v.append(ck)
-                    v.append("=")
-
-                    # Get the value of WFN of component
-                    v.append('"')
-                    v.append(comp.as_wfn())
-                    v.append('"')
-
-                    # Append v to the WFN and add a separator
-                    wfn.append("".join(v))
-                    wfn.append(CPEComponent2_3_WFN.SEPARATOR_COMP)
+            # Append v to the WFN and add a separator
+            wfn.append("".join(v))
+            wfn.append(CPEComponent2_3_WFN.SEPARATOR_COMP)
 
         # Del the last separator
         wfn = wfn[:-1]
@@ -337,15 +321,14 @@ class CPE1_1(CPE):
             for elem in elements:
                 comp = elem.get(att_name)
 
-                if (isinstance(comp, CPEComponentEmpty) or
-                   isinstance(comp, CPEComponentUndefined)):
-
+                if isinstance(comp, (CPEComponentUndefined, CPEComponentEmpty)):
                     value = CPEComponent1_1.VALUE_EMPTY
                 else:
                     value = comp.get_value()
 
                 lc.append(value)
         return lc
+
 
 if __name__ == "__main__":
     import doctest

@@ -84,9 +84,9 @@ class CPESet2_3(CPESet):
         This function is a support function for compare_WFNs.
         """
 
-        if (CPESet2_3._is_string(source)):
+        if CPESet2_3._is_string(source):
             source = source.lower()
-        if (CPESet2_3._is_string(target)):
+        if CPESet2_3._is_string(target):
             target = target.lower()
 
         # In this specification, unquoted wildcard characters in the target
@@ -98,23 +98,23 @@ class CPESet2_3(CPESet):
 
         # If source and target attribute values are equal,
         # then the result is EQUAL
-        if (source == target):
+        if source == target:
             return CPESet2_3.LOGICAL_VALUE_EQUAL
 
         # If source attribute value is ANY, then the result is SUPERSET
-        if (source == CPEComponent2_3_WFN.VALUE_ANY):
+        if source == CPEComponent2_3_WFN.VALUE_ANY:
             return CPESet2_3.LOGICAL_VALUE_SUPERSET
 
         # If target attribute value is ANY, then the result is SUBSET
-        if (target == CPEComponent2_3_WFN.VALUE_ANY):
+        if target == CPEComponent2_3_WFN.VALUE_ANY:
             return CPESet2_3.LOGICAL_VALUE_SUBSET
 
         # If either source or target attribute value is NA
         # then the result is DISJOINT
-        isSourceNA = source == CPEComponent2_3_WFN.VALUE_NA
-        isTargetNA = target == CPEComponent2_3_WFN.VALUE_NA
+        is_source_na = source == CPEComponent2_3_WFN.VALUE_NA
+        is_target_na = target == CPEComponent2_3_WFN.VALUE_NA
 
-        if (isSourceNA or isTargetNA):
+        if is_source_na or is_target_na:
             return CPESet2_3.LOGICAL_VALUE_DISJOINT
 
         # If we get to this point, we are comparing two strings
@@ -178,20 +178,20 @@ class CPESet2_3(CPESet):
         index = -1
         leftover = len(target)
 
-        while (leftover > 0):
+        while leftover > 0:
             index = target.find(source, index + 1)
-            if (index == -1):
+            if index == -1:
                 break
             escapes = target.count("\\", 0, index)
-            if ((index > 0) and (begins != -1) and
-               (begins < (index - escapes))):
-
+            if ((index > 0) and (
+                    begins != -1) and (
+                        begins < (index - escapes))):
                 break
 
             escapes = target.count("\\", index + 1)
             source_escapes = source.count("\\", index + 1)
             leftover = len(target) - index + source_escapes - escapes - len(source)
-            if ((leftover > 0) and ((ends != -1) and (leftover > ends))):
+            if leftover > 0 and (ends != -1 and leftover > ends):
                 continue
 
             return CPESet2_3.LOGICAL_VALUE_SUPERSET
@@ -236,24 +236,24 @@ class CPESet2_3(CPESet):
         return False
 
     @classmethod
-    def _is_even_wildcards(cls, str, idx):
+    def _is_even_wildcards(cls, str_, idx):
         """
         Returns True if an even number of escape (backslash) characters
         precede the character at index idx in string str.
 
-        :param string str: string to check
+        :param string str_: string to check
         :returns: True if an even number of escape characters precede
             the character at index idx in string str, False otherwise.
         :rtype: boolean
         """
 
         result = 0
-        while ((idx > 0) and (str[idx - 1] == "\\")):
+        while idx > 0 and str_[idx - 1] == "\\":
             idx -= 1
             result += 1
 
-        isEvenNumber = (result % 2) == 0
-        return isEvenNumber
+        is_even_number = (result % 2) == 0
+        return is_even_number
 
     @classmethod
     def _is_string(cls, arg):
@@ -268,10 +268,10 @@ class CPESet2_3(CPESet):
         This function is a support function for _compare().
         """
 
-        isAny = arg == CPEComponent2_3_WFN.VALUE_ANY
-        isNa = arg == CPEComponent2_3_WFN.VALUE_NA
+        is_any = arg == CPEComponent2_3_WFN.VALUE_ANY
+        is_na = arg == CPEComponent2_3_WFN.VALUE_NA
 
-        return not (isAny or isNa)
+        return not (is_any or is_na)
 
     @classmethod
     def compare_wfns(cls, source, target):
@@ -301,7 +301,7 @@ class CPESet2_3(CPESet):
                 # Not a logical value: del double quotes
                 value_tar = value_tar[1:-1]
 
-            yield (att, CPESet2_3._compare(value_src, value_tar))
+            yield att, CPESet2_3._compare(value_src, value_tar)
 
     @classmethod
     def cpe_disjoint(cls, source, target):
@@ -319,8 +319,8 @@ class CPESet2_3(CPESet):
         # If any pairwise comparison returned DISJOINT  then
         # the overall name relationship is DISJOINT
         for att, result in CPESet2_3.compare_wfns(source, target):
-            isDisjoint = result == CPESet2_3.LOGICAL_VALUE_DISJOINT
-            if isDisjoint:
+            is_disjoint = result == CPESet2_3.LOGICAL_VALUE_DISJOINT
+            if is_disjoint:
                 return True
         return False
 
@@ -340,8 +340,8 @@ class CPESet2_3(CPESet):
         # If any pairwise comparison returned EQUAL then
         # the overall name relationship is EQUAL
         for att, result in CPESet2_3.compare_wfns(source, target):
-            isEqual = result == CPESet2_3.LOGICAL_VALUE_EQUAL
-            if not isEqual:
+            is_equal = result == CPESet2_3.LOGICAL_VALUE_EQUAL
+            if not is_equal:
                 return False
         return True
 
@@ -361,9 +361,9 @@ class CPESet2_3(CPESet):
         # If any pairwise comparison returned something other than SUBSET
         # or EQUAL, then SUBSET is False.
         for att, result in CPESet2_3.compare_wfns(source, target):
-            isSubset = result == CPESet2_3.LOGICAL_VALUE_SUBSET
-            isEqual = result == CPESet2_3.LOGICAL_VALUE_EQUAL
-            if (not isSubset) and (not isEqual):
+            is_subset = result == CPESet2_3.LOGICAL_VALUE_SUBSET
+            is_equal = result == CPESet2_3.LOGICAL_VALUE_EQUAL
+            if not any((is_subset, is_equal)):
                 return False
         return True
 
@@ -383,9 +383,9 @@ class CPESet2_3(CPESet):
         # If any pairwise comparison returned something other than SUPERSET
         # or EQUAL, then SUPERSET is False.
         for att, result in CPESet2_3.compare_wfns(source, target):
-            isSuperset = result == CPESet2_3.LOGICAL_VALUE_SUPERSET
-            isEqual = result == CPESet2_3.LOGICAL_VALUE_EQUAL
-            if (not isSuperset) and (not isEqual):
+            is_superset = result == CPESet2_3.LOGICAL_VALUE_SUPERSET
+            is_equal = result == CPESet2_3.LOGICAL_VALUE_EQUAL
+            if not any((is_superset, is_equal)):
                 return False
 
         return True
@@ -411,7 +411,7 @@ class CPESet2_3(CPESet):
             raise ValueError(errmsg)
 
         for k in self.K:
-            if cpe._str == k._str:
+            if cpe._str == k._str:  # noqa, pylint: disable=protected-access
                 return None
 
         if isinstance(cpe, CPE2_3_WFN):
@@ -427,7 +427,7 @@ class CPESet2_3(CPESet):
         'True' if X matches any member of K, and 'False' otherwise.
 
         :param CPESet self: A set of m known CPE Names K = {K1, K2, …, Km}.
-        :param CPE cpe: A candidate CPE Name X.
+        :param CPE wfn: A candidate CPE Name X.
         :returns: True if X matches K, otherwise False.
         :rtype: boolean
         """
@@ -436,6 +436,7 @@ class CPESet2_3(CPESet):
             if CPESet2_3.cpe_superset(wfn, N):
                 return True
         return False
+
 
 if __name__ == "__main__":
     import doctest
